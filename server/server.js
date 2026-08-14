@@ -1,4 +1,5 @@
 import http from 'node:http';
+import { networkInterfaces } from 'node:os';
 import { createReadStream, readFileSync, statSync } from 'node:fs';
 import { extname, join, normalize, sep } from 'node:path';
 import Anthropic from '@anthropic-ai/sdk';
@@ -343,10 +344,31 @@ const server = http.createServer(async (req, res) => {
   res.writeHead(405).end('Method not allowed');
 });
 
+/** Addresses another device on the same network can actually reach. */
+function lanAddresses() {
+  const found = [];
+  for (const list of Object.values(networkInterfaces())) {
+    for (const net of list || []) {
+      if (net.family === 'IPv4' && !net.internal) found.push(net.address);
+    }
+  }
+  return found;
+}
+
 server.listen(PORT, HOST, () => {
-  const where = HOST === '0.0.0.0' ? 'localhost' : HOST;
-  console.log(`\n  T. M. Riddle — the diary is open.`);
-  console.log(`  http://${where}:${PORT}\n`);
+  console.log(`\n  T. M. Riddle — the diary is open.\n`);
+  console.log(`  On this machine:  http://localhost:${PORT}`);
+
+  if (HOST === '0.0.0.0') {
+    const lan = lanAddresses();
+    if (lan.length) {
+      console.log('\n  From your iPad, on the same Wi-Fi:');
+      for (const address of lan) console.log(`      http://${address}:${PORT}`);
+    } else {
+      console.log('\n  No network address found — is this machine on Wi-Fi?');
+    }
+  }
+  console.log('');
   if (HOLLOW) {
     console.log(
       HAS_KEY
@@ -357,6 +379,6 @@ server.listen(PORT, HOST, () => {
     console.log(`  Answering with ${MODEL}${FAST ? ' in fast mode' : ''}.`);
   }
   console.log(
-    '\n  On an iPad: open the address above over your LAN, then Share → Add to Home Screen.\n',
+    '\n  In Safari on the iPad, open the address above, then Share → Add to Home Screen.\n',
   );
 });
