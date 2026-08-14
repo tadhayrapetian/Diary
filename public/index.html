@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"
+    />
+    <title>T. M. Riddle</title>
+    <meta name="description" content="A diary that writes back." />
+    <meta name="theme-color" content="#e4d6b8" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="apple-mobile-web-app-title" content="T. M. Riddle" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./icon.svg" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main id="surface" aria-label="The open diary">
+      <canvas id="page"></canvas>
+      <canvas id="flux"></canvas>
+      <div id="turner" aria-hidden="true"></div>
+      <button
+        id="corner"
+        type="button"
+        aria-label="Diary settings"
+        title="Press and hold"
+      ></button>
+    </main>
+
+    <div id="panel" class="veil" hidden>
+      <div class="card" role="dialog" aria-modal="true" aria-label="Settings">
+        <h1>The Diary</h1>
+
+        <label class="row">
+          <span>The hand writes</span>
+          <select id="opt-speed">
+            <option value="86">slowly</option>
+            <option value="52" selected>naturally</option>
+            <option value="32">briskly</option>
+          </select>
+        </label>
+
+        <label class="row">
+          <span>It answers after</span>
+          <select id="opt-idle">
+            <option value="1200">a moment</option>
+            <option value="1800" selected>a pause</option>
+            <option value="2800">a long pause</option>
+            <option value="0">never — I will tap with two fingers</option>
+          </select>
+        </label>
+
+        <p class="note tight">
+          Two fingers on the page always sends it, whatever is chosen above. A
+          tap while it is writing makes the hand hurry.
+        </p>
+
+        <label class="row">
+          <span>Accept my finger, not only a pencil</span>
+          <input id="opt-touch" type="checkbox" checked />
+        </label>
+
+        <div class="actions">
+          <button id="act-ledger" type="button">Read it back</button>
+          <button id="act-new" type="button" class="quiet">
+            Begin a new diary
+          </button>
+        </div>
+
+        <p id="state-note" class="note"></p>
+        <button id="act-close" type="button" class="close" aria-label="Close">
+          Close
+        </button>
+      </div>
+    </div>
+
+    <div id="ledger" class="veil" hidden>
+      <div class="card wide" role="dialog" aria-modal="true" aria-label="What was written">
+        <h1>What was written</h1>
+        <div id="ledger-body" class="scroll"></div>
+        <button id="ledger-close" type="button" class="close" aria-label="Close">
+          Close
+        </button>
+      </div>
+    </div>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

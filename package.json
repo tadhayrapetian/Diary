@@ -1,0 +1,18 @@
+{
+  "name": "riddle-diary",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A diary that writes back. Write on the page with an Apple Pencil; the page answers in its own hand.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server/server.js",
+    "dev": "node --watch server/server.js",
+    "test": "node --test server/ink.test.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.117.1"
+  }
+}
