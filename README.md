@@ -145,3 +145,18 @@ It is written to be charming and to be genuinely useful — a diary that only
 purrs is a toy. It grows more familiar the longer you write to it, which is the
 point of the character. It will not give you genuinely dangerous instructions; it
 declines the way a clever, well-bred boy declines, and moves on.
+
+---
+
+## Also in here: lesson reminders
+
+`reminders/` is a second, separate program with nothing to do with the diary: it
+reads your Apple Calendar and sends your students a Telegram message before each
+lesson. It shares only the `.env` reader with the diary and runs on its own.
+
+```bash
+npm run reminders
+```
+
+Setting it up (a bot token, an app-specific password, who your students are) is
+in **[reminders/README.md](reminders/README.md)**, in Russian.

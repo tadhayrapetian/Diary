@@ -3,14 +3,15 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "A diary that writes back. Write on the page with an Apple Pencil; the page answers in its own hand.",
+  "description": "A diary that writes back, and a bot that reminds your students about their lessons.",
   "engines": {
     "node": ">=20"
   },
   "scripts": {
     "start": "node server/server.js",
     "dev": "node --watch server/server.js",
-    "test": "node --test server/ink.test.js"
+    "reminders": "node reminders/bot.js",
+    "test": "node --test server/ink.test.js reminders/ics.test.js reminders/schedule.test.js reminders/message.test.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.117.1"

@@ -3,3 +3,9 @@ node_modules/
 .env.local
 *.log
 .DS_Store
+
+# Ученики и отметки об отправленном — личные данные, в репозиторий не идут
+reminders/students.json
+reminders/state.json
+reminders/.students.*.tmp
+reminders/.state.*.tmp
