@@ -256,6 +256,18 @@ async function tick(telegram, { verbose = true } = {}) {
 
 // ------------------------------------------------------------ chat with pupils
 
+/**
+ * Незнакомый чат — это либо ученик, открывший бота без ссылки, либо вы сами.
+ * Номер чата печатается потому, что узнать свой TEACHER_CHAT_ID больше неоткуда:
+ * написать боту и посмотреть в лог — самый короткий путь.
+ */
+function noteStranger(chat) {
+  note(
+    `незнакомый чат ${chat.id} (${describeChat(chat)}). ` +
+      `Если это вы — впишите в .env: TEACHER_CHAT_ID=${chat.id}`,
+  );
+}
+
 async function handleMessage(telegram, message, lessonsRef) {
   const chat = message.chat;
   if (!chat || chat.type !== 'private') return;
@@ -264,10 +276,11 @@ async function handleMessage(telegram, message, lessonsRef) {
   const known = findByChat(roster, chat.id);
 
   if (settings.teacherChat && String(chat.id) === String(settings.teacherChat) && !known) {
-    if (parsed?.command === 'start') {
-      await telegram.send(chat.id, 'Это ваш чат преподавателя — сюда я буду писать о сбоях.');
-      return;
-    }
+    await telegram.send(
+      chat.id,
+      'Это ваш чат преподавателя — сюда я пишу о сбоях и о том, кто подключился.',
+    );
+    return;
   }
 
   if (parsed?.command === 'start') {
@@ -281,6 +294,8 @@ async function handleMessage(telegram, message, lessonsRef) {
         known.paused = false;
         saveRoster(roster);
         note(`${known.name}: напоминания снова включены`);
+      } else {
+        noteStranger(chat);
       }
       return;
     }
@@ -300,6 +315,7 @@ async function handleMessage(telegram, message, lessonsRef) {
   }
 
   if (!known) {
+    noteStranger(chat);
     await telegram.send(chat.id, render(roster.templates?.unknown || TEMPLATES.unknown, {}));
     return;
   }
