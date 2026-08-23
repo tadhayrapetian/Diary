@@ -3,14 +3,16 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "A diary that writes back. Write on the page with an Apple Pencil; the page answers in its own hand.",
+  "description": "Two small apps: a diary that writes back, and a reader that sets anything you give it in type.",
   "engines": {
     "node": ">=20"
   },
   "scripts": {
     "start": "node server/server.js",
     "dev": "node --watch server/server.js",
-    "test": "node --test server/ink.test.js"
+    "reader": "node reader/server/server.js",
+    "reader:dev": "node --watch reader/server/server.js",
+    "test": "node --test server/ink.test.js reader/test/*.test.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.117.1"

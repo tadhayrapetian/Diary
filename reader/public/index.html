@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Lectern</title>
+    <meta name="description" content="Paste anything. Read it properly. Tap any word." />
+    <meta name="theme-color" content="#faf8f4" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Lectern" />
+    <link rel="icon" href="icon.svg" />
+    <link rel="apple-touch-icon" href="icon.svg" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-screen="desk">
+    <div id="progress" class="progress" aria-hidden="true"><i></i></div>
+
+    <!-- ------------------------------------------------------------- the desk -->
+    <main id="desk" class="desk">
+      <header class="desk-head">
+        <h1 class="wordmark">Lectern</h1>
+        <p class="tagline">
+          Put anything in — a paste, a PDF, a Word file, a book, a link — and read
+          it as it deserves to be read. Tap any word for what it means, how it
+          sounds, and what it is in your own language.
+        </p>
+      </header>
+
+      <form id="intake" class="intake" autocomplete="off">
+        <div id="drop" class="drop">
+          <textarea
+            id="source"
+            class="source"
+            spellcheck="false"
+            placeholder="Paste your text here — or a link, or drop a file anywhere on this page."
+          ></textarea>
+          <div id="dropHint" class="drop-hint" hidden>Let go to read it</div>
+        </div>
+
+        <div id="fileCard" class="file-card" hidden>
+          <div class="file-face">
+            <span id="fileIcon" class="file-icon">PDF</span>
+            <div class="file-what">
+              <strong id="fileName">document.pdf</strong>
+              <span id="fileFacts" class="file-facts">reading…</span>
+            </div>
+          </div>
+          <button type="button" id="fileClear" class="ghost" aria-label="Remove file">Remove</button>
+        </div>
+
+        <div class="intake-foot">
+          <div class="intake-actions">
+            <button type="submit" id="go" class="primary">Set it in type</button>
+            <label class="ghost file-pick">
+              Choose a file
+              <input
+                type="file"
+                id="file"
+                accept=".pdf,.docx,.epub,.txt,.md,.markdown,.html,.htm,.rtf,.csv,application/pdf,text/plain,text/html,text/markdown"
+              />
+            </label>
+          </div>
+          <p id="intakeNote" class="intake-note"></p>
+        </div>
+      </form>
+
+      <section id="shelf" class="shelf" hidden>
+        <h2 class="shelf-title">On the shelf</h2>
+        <ul id="shelfList" class="shelf-list"></ul>
+      </section>
+
+      <footer class="desk-foot">
+        <span id="engine" class="engine"></span>
+        <button type="button" id="deskWords" class="linkish">Saved words</button>
+        <button type="button" id="deskSettings" class="linkish">Settings</button>
+      </footer>
+    </main>
+
+    <!-- ----------------------------------------------------------- the reading -->
+    <div id="reading" class="reading" hidden>
+      <div class="bar">
+        <button type="button" id="back" class="bar-button" aria-label="Back to the desk">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M12.5 4 6.5 10l6 6" /></svg>
+        </button>
+        <button type="button" id="tocToggle" class="bar-button" aria-label="Contents" hidden>
+          <svg viewBox="0 0 20 20" aria-hidden="true">
+            <path d="M4 6h12M4 10h12M4 14h8" />
+          </svg>
+        </button>
+        <span id="barTitle" class="bar-title"></span>
+        <span id="barStatus" class="bar-status"></span>
+        <button type="button" id="wordsToggle" class="bar-button" aria-label="Saved words">
+          <svg viewBox="0 0 20 20" aria-hidden="true">
+            <path d="M10 3.5 12 8h4.5l-3.6 2.8 1.4 4.4L10 12.5 5.7 15.2l1.4-4.4L3.5 8H8z" />
+          </svg>
+        </button>
+        <button type="button" id="settingsToggle" class="bar-button" aria-label="Settings">
+          <svg viewBox="0 0 20 20" aria-hidden="true">
+            <path d="M4 6h12M4 10h12M4 14h12" />
+            <circle cx="7" cy="6" r="1.6" /><circle cx="13" cy="10" r="1.6" />
+            <circle cx="8" cy="14" r="1.6" />
+          </svg>
+        </button>
+      </div>
+
+      <nav id="toc" class="toc" hidden aria-label="Contents"></nav>
+
+      <article id="article" class="article"></article>
+
+      <aside id="glossary" class="glossary" hidden>
+        <h2>Words worth knowing</h2>
+        <dl id="glossaryList"></dl>
+      </aside>
+
+      <div id="articleEnd" class="article-end" hidden>
+        <div class="end-mark" aria-hidden="true"></div>
+        <p id="endNote" class="end-note"></p>
+      </div>
+    </div>
+
+    <!-- ------------------------------------------------------------- the card -->
+    <div id="selectionCue" class="selection-cue" hidden>
+      <button type="button" id="selectionLook">Look up</button>
+    </div>
+
+    <div id="cardScrim" class="card-scrim" hidden></div>
+    <section id="card" class="card" hidden aria-live="polite"></section>
+
+    <!-- ------------------------------------------------------------- the panels -->
+    <div id="panelScrim" class="panel-scrim" hidden></div>
+
+    <section id="wordsPanel" class="panel" hidden aria-label="Saved words">
+      <header class="panel-head">
+        <h2>Saved words</h2>
+        <button type="button" class="panel-close" data-close aria-label="Close">&times;</button>
+      </header>
+      <div class="panel-body">
+        <p id="wordsEmpty" class="panel-empty">
+          Nothing saved yet. Tap a word while reading and press the star.
+        </p>
+        <ul id="wordsList" class="words-list"></ul>
+      </div>
+      <footer class="panel-foot">
+        <button type="button" id="wordsExport" class="ghost">Export for flashcards</button>
+        <button type="button" id="wordsClear" class="ghost danger">Clear all</button>
+      </footer>
+    </section>
+
+    <section id="settingsPanel" class="panel" hidden aria-label="Settings">
+      <header class="panel-head">
+        <h2>Settings</h2>
+        <button type="button" class="panel-close" data-close aria-label="Close">&times;</button>
+      </header>
+      <div class="panel-body">
+        <label class="field">
+          <span class="field-label">Translate into</span>
+          <select id="setLang"></select>
+        </label>
+
+        <div class="field">
+          <span class="field-label">Page</span>
+          <div class="chips" id="setTheme" role="radiogroup" aria-label="Page colour">
+            <button type="button" role="radio" data-theme="auto">Auto</button>
+            <button type="button" role="radio" data-theme="paper">Paper</button>
+            <button type="button" role="radio" data-theme="sepia">Sepia</button>
+            <button type="button" role="radio" data-theme="night">Night</button>
+          </div>
+        </div>
+
+        <label class="field">
+          <span class="field-label">Type size <em id="sizeValue"></em></span>
+          <input type="range" id="setSize" min="16" max="26" step="1" />
+        </label>
+
+        <label class="field">
+          <span class="field-label">Line length <em id="measureValue"></em></span>
+          <input type="range" id="setMeasure" min="28" max="44" step="1" />
+        </label>
+
+        <label class="field field-row">
+          <input type="checkbox" id="setJustify" />
+          <span>Justify the text</span>
+        </label>
+
+        <label class="field field-row">
+          <input type="checkbox" id="setHighlight" />
+          <span>Mark the words I have saved</span>
+        </label>
+      </div>
+      <footer class="panel-foot">
+        <span id="settingsNote" class="panel-note"></span>
+      </footer>
+    </section>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
