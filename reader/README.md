@@ -188,16 +188,59 @@ the sentence as well as the word — because "charge" in a cavalry charge is not
 
 ### The model call
 
-`claude-opus-5` throughout, streamed, at low effort — careful work, but not hard
-reasoning, and the first token matters more than the last. The prompts are
-cached, which matters when twenty pieces of a book share one. Refusal fallbacks
-are on, and if your account does not have the beta features the server quietly
-retries on the plain endpoint. `LECTERN_FAST=1` runs the same model at up to
-~2.5x the output rate, at premium pricing; on a book you very much notice.
+Streamed, at low effort — careful work, but not hard reasoning, and the first
+token matters more than the last. The prompts are cached, which matters when
+twenty pieces of a book share one. Refusal fallbacks are on, and if your account
+does not have the beta features the server quietly retries on the plain
+endpoint. `LECTERN_FAST=1` runs the same model at up to ~2.5x the output rate,
+at premium pricing; on a book you very much notice.
 
 The survey pass reads the whole work in a single request — a million characters
 is a quarter of the context window — and answers with a few hundred lines. It is
 the cheapest part of a book translation and the part that does the most for it.
+
+**Not all the work is the same work**, so it does not all go to the same model:
+
+| | Setting | Default |
+|---|---|---|
+| Setting type, translating | `LECTERN_MODEL` | `claude-opus-5` |
+| A tapped word | `LECTERN_LOOKUP_MODEL` | `claude-haiku-4-5` |
+| Reading a book through first | `LECTERN_SURVEY_MODEL` | follows `LECTERN_MODEL` |
+
+A dictionary entry is a short factual answer and a small model gives it just as
+well. That matters more than it sounds: on Opus a tapped word costs about a
+cent, which over an evening's reading quietly outruns the book you translated.
+
+## What it costs
+
+The button tells you before you press it — words, pieces, roughly how long, and
+roughly how much, **at the rates of the model that is actually set.** Change the
+model and the number changes with it. A model whose price is not in the table is
+not given an invented one; the estimate simply names it and leaves the money
+out.
+
+Rough shape of it, for a hundred-thousand-word novel:
+
+| | A chapter | The whole book |
+|---|---|---|
+| Opus 5 | ~$0.35 | ~$7 |
+| Sonnet 5 | ~$0.15 | ~$3 |
+| Haiku 4.5 | ~$0.07 | ~$1.5 |
+
+Two things worth knowing before choosing on price alone:
+
+- **Haiku's context window is 200K.** The read-through wants the whole book in
+  one request, and a long novel will not fit. It fails softly — the translation
+  carries on without the settled name list — but that list is the thing that
+  keeps chapter one and chapter twenty agreeing, so a cheap survey on a long
+  book costs you the consistency you came for. `claude-sonnet-5` has the same
+  1M window as Opus at a lower rate, and is the better economy here.
+- **Anything long asks twice.** A job over ten minutes or a dollar turns the
+  button into a confirmation rather than starting.
+
+The rates live in one table in `server/pricing.js`, including the fast-mode
+premium and any introductory pricing that expires on its own. When Anthropic's
+prices change, that file is the one-line edit.
 
 ---
 
@@ -207,7 +250,7 @@ the cheapest part of a book translation and the part that does the most for it.
 npm test
 ```
 
-93 tests. The PDF reader is checked against a real PDF committed as a fixture —
+99 tests. The PDF reader is checked against a real PDF committed as a fixture —
 justified lines reflowing into prose, accents and quotation marks surviving the
 font encoding, headings recognised by type size, running heads and page numbers
 dropped while the title they echo is kept. The rest covers the block protocol

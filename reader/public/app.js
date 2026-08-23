@@ -157,6 +157,9 @@ const state = {
   attached: null,
   local: false,
   fast: false,
+  model: '',
+  rates: null,
+  surveyRates: null,
   armed: false, // a long job has been asked about and is waiting on a second click
 };
 
@@ -215,37 +218,58 @@ const reader = new Reader({
 // ------------------------------------------------------- estimating the work
 
 /**
- * Published Claude Opus 5 rates, in dollars per million tokens. A book is not a
- * free thing to translate and the reader deserves the number before the click,
- * not on a statement at the end of the month.
+ * What this is going to cost, at the rates of the model that will actually do
+ * it. A book is not a free thing to translate and the reader deserves the
+ * number before the click, not on a statement at the end of the month.
+ *
+ * The rates come from the server, which is what knows which model is set.
  */
-const RATE = { input: 5, output: 25 };
-/** Roughly what a streamed reply manages, in tokens a second. */
-const TOKENS_PER_SECOND = 70;
+
+/** Whether a job is long enough for the whole-work read-through to happen. */
+const surveyed = (mode, words) => mode !== 'typeset' && words > 7000;
 
 function estimate(words, mode) {
+  const rates = state.rates;
+  if (!rates) return { known: false, minutes: 1, dollars: 0 };
+
   const input = words * 1.4;
   // Translating runs longer than the original, and Cyrillic costs more tokens
   // per character than Latin; facing pages emit the original as well.
   const factor = mode === 'bilingual' ? 2.6 : mode === 'translate' ? 1.7 : 1.15;
   const output = input * factor;
-  const dollars = (input * RATE.input + output * RATE.output) / 1e6;
-  const seconds = (output / TOKENS_PER_SECOND) * (state.fast ? 0.45 : 1);
-  return { dollars, minutes: Math.max(1, Math.round(seconds / 60)) };
+
+  let dollars = (input * rates.input + output * rates.output) / 1e6;
+  let seconds = output / (rates.speed || 70);
+  let known = rates.known;
+
+  if (surveyed(mode, words)) {
+    // One long read, one short answer.
+    const survey = state.surveyRates || rates;
+    const answer = 6000;
+    dollars += (input * survey.input + answer * survey.output) / 1e6;
+    seconds += input / 8000 + answer / (survey.speed || 70);
+    known = known && survey.known;
+  }
+
+  return { dollars, minutes: Math.max(1, Math.round(seconds / 60)), known };
 }
 
 const money = (dollars) =>
   dollars < 0.1 ? 'a few cents' : dollars < 1 ? `about $${dollars.toFixed(2)}` : `about $${dollars.toFixed(dollars < 10 ? 1 : 0)}`;
 
+const escape = (text) =>
+  String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
 function drawEstimate() {
   const source = state.source;
   if (!source || !source.words) {
     el.estimate.hidden = true;
+    state.heavy = false;
     return;
   }
   const pieces = source.pieces?.[state.mode] ?? 1;
-  const { dollars, minutes } = estimate(source.words, state.mode);
-  const heavy = minutes >= 10 || dollars >= 1;
+  const { dollars, minutes, known } = estimate(source.words, state.mode);
+  const heavy = !state.local && (minutes >= 10 || (known && dollars >= 1));
 
   const parts = [`<b>${source.words.toLocaleString()}</b> words`];
   if (source.pages) parts.push(`${source.pages} pages`);
@@ -254,14 +278,19 @@ function drawEstimate() {
   }
   if (pieces > 1) parts.push(`${pieces} pieces`);
   if (!state.local) {
-    parts.push(`roughly <b>${minutes} min</b> of work`);
-    parts.push(`${money(dollars)} at current rates`);
+    parts.push(`roughly <b>${minutes} min</b>`);
+    // A model whose price is not in the table is not given an invented one.
+    parts.push(
+      known
+        ? `<b>${money(dollars)}</b> on ${escape(state.model)}`
+        : `on ${escape(state.model)}`,
+    );
   }
 
   el.estimate.innerHTML = parts.join(' · ');
-  el.estimate.classList.toggle('heavy', heavy && !state.local);
+  el.estimate.classList.toggle('heavy', heavy);
   el.estimate.hidden = false;
-  state.heavy = heavy && !state.local;
+  state.heavy = heavy;
   disarm();
 }
 
@@ -989,6 +1018,10 @@ async function boot() {
     el.intoLang.value = settings.targetLang;
     el.fromLang.value = state.fromLang;
 
+    state.model = server.model || '';
+    state.rates = server.rates || null;
+    state.surveyRates = server.surveyRates || null;
+
     if (server.local) {
       for (const chip of el.modes.querySelectorAll('[data-mode]:not([data-mode="typeset"])')) {
         chip.disabled = true;
@@ -997,7 +1030,11 @@ async function boot() {
       el.engine.textContent =
         'Plain typesetting only — add a key in .env to translate and to look words up.';
     } else {
-      el.engine.textContent = `${server.model}${server.fast ? ', fast' : ''}.`;
+      el.engine.textContent =
+        `${server.model}${server.fast ? ', fast' : ''} for the work` +
+        (server.lookupModel && server.lookupModel !== server.model
+          ? `, ${server.lookupModel} for words.`
+          : '.');
     }
   } catch {
     el.engine.textContent = 'The server is not answering.';

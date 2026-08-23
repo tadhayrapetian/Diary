@@ -206,7 +206,7 @@ function framing({
  * answer — lets every piece start with the whole cast already named.
  */
 export async function surveyWork(job, deps) {
-  const { client, model, surveyPrompt, signal } = deps;
+  const { client, model, surveyModel, surveyPrompt, signal } = deps;
   if (!surveyPrompt || !job.text?.trim()) return { glossary: [], register: '' };
 
   const instruction = [
@@ -218,7 +218,7 @@ export async function surveyWork(job, deps) {
   try {
     const stream = client.messages.stream(
       {
-        model,
+        model: surveyModel || model,
         max_tokens: 8000,
         output_config: { effort: 'low' },
         system: [{ type: 'text', text: surveyPrompt }],

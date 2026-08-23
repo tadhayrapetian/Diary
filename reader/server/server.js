@@ -20,6 +20,7 @@ import { runPipeline, pieceCount, nameOfLanguage } from './typeset.js';
 import { lookUp, languageName } from './lexicon.js';
 import { typesetLocally, lookUpLocally } from './local.js';
 import { Library } from './jobs.js';
+import { ratesFor } from './pricing.js';
 
 loadEnv();
 
@@ -29,7 +30,13 @@ const PUBLIC = join(root, 'public');
 
 const PORT = Number(process.env.LECTERN_PORT || 4244);
 const HOST = process.env.LECTERN_HOST || '0.0.0.0';
+// The work is not all the same work. Setting a book in type or translating it
+// is the job the good model is for; a dictionary entry is a short factual
+// answer that a small fast model does just as well for a fifth of the price,
+// and at a tap a word that adds up over an evening's reading.
 const MODEL = process.env.LECTERN_MODEL || 'claude-opus-5';
+const LOOKUP_MODEL = process.env.LECTERN_LOOKUP_MODEL || 'claude-haiku-4-5';
+const SURVEY_MODEL = process.env.LECTERN_SURVEY_MODEL || MODEL;
 const FAST = /^(1|true|yes)$/i.test(process.env.LECTERN_FAST || '');
 const TARGET_LANG = (process.env.LECTERN_LANG || 'ru').toLowerCase();
 const HAS_KEY = Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN);
@@ -325,6 +332,7 @@ async function runJob(job, spec) {
           client,
           model: MODEL,
           prompt: PROMPTS[spec.mode] || PROMPTS.typeset,
+          surveyModel: SURVEY_MODEL,
           surveyPrompt: SURVEY_PROMPT,
           fast: FAST,
           signal: spec.controller.signal,
@@ -411,7 +419,11 @@ async function handleWord(req, res) {
       );
       return;
     }
-    sendJson(res, 200, await lookUp(query, { client, model: MODEL, prompt: LEXICON_PROMPT }));
+    sendJson(
+      res,
+      200,
+      await lookUp(query, { client, model: LOOKUP_MODEL, prompt: LEXICON_PROMPT }),
+    );
   } catch (error) {
     console.error('[lectern] lookup failed:', error?.message || error);
     sendJson(res, 502, { error: 'could not look that up just now' });
@@ -502,10 +514,17 @@ const server = http.createServer(async (req, res) => {
       sendJson(res, 200, {
         local: LOCAL,
         hasKey: HAS_KEY,
-        model: LOCAL ? null : MODEL,
         fast: FAST,
         targetLang: TARGET_LANG,
         targetLangName: languageName(TARGET_LANG),
+        // What each part of the work costs, so the estimate on the button is
+        // the price of the model that will actually do it.
+        model: LOCAL ? null : MODEL,
+        lookupModel: LOCAL ? null : LOOKUP_MODEL,
+        surveyModel: LOCAL ? null : SURVEY_MODEL,
+        rates: LOCAL ? null : ratesFor(MODEL, { fast: FAST }),
+        lookupRates: LOCAL ? null : ratesFor(LOOKUP_MODEL),
+        surveyRates: LOCAL ? null : ratesFor(SURVEY_MODEL, { fast: FAST }),
       });
       return;
     }
@@ -582,9 +601,16 @@ function announce() {
         : '  No ANTHROPIC_API_KEY found — plain typesetting and borrowed\n  dictionaries only, and translation is off. Put a key in .env.',
     );
   } else {
+    const rates = ratesFor(MODEL, { fast: FAST });
     console.log(
-      `  Setting type and translating with ${MODEL}${FAST ? ' in fast mode' : ''}; ` +
-        `words are put into ${languageName(TARGET_LANG)} by default.`,
+      `  Setting type and translating with ${MODEL}${FAST ? ' in fast mode' : ''}` +
+        (rates.known ? ` ($${rates.input}/$${rates.output} per Mtok)` : '') + '.',
+    );
+    const lookup = ratesFor(LOOKUP_MODEL);
+    console.log(
+      `  Looking words up with ${LOOKUP_MODEL}` +
+        (lookup.known ? ` ($${lookup.input}/$${lookup.output})` : '') +
+        `, into ${languageName(TARGET_LANG)}.`,
     );
   }
   const shelved = library.list().length;
