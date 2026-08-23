@@ -1,0 +1,415 @@
+:root {
+  --bg: #faf8f4;
+  --surface: #ffffff;
+  --border: #e7e2d8;
+  --ink: #1d1e21;
+  --muted: #7b756b;
+  --accent: #b1552a;
+  --accent-soft: #f3e6dc;
+  --good: #3f7d4f;
+  --bad: #b23b32;
+  --shadow: 0 1px 2px rgba(30, 25, 15, 0.05), 0 6px 18px rgba(30, 25, 15, 0.05);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #16171a;
+    --surface: #1e2024;
+    --border: #2f323a;
+    --ink: #e9e6e0;
+    --muted: #948e86;
+    --accent: #e08a54;
+    --accent-soft: #33261d;
+    --good: #74b487;
+    --bad: #e2796f;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 18px rgba(0, 0, 0, 0.25);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* ------------------------------------------------------------------ bars */
+
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px max(16px, env(safe-area-inset-left)) 10px
+    max(16px, env(safe-area-inset-right));
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: saturate(1.4) blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+
+.bar h1 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.search {
+  flex: 1;
+  min-width: 0;
+  max-width: 340px;
+  margin-left: auto;
+  padding: 7px 12px;
+  font: inherit;
+  font-size: 15px;
+  color: inherit;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  outline: none;
+}
+
+.search:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.status {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.status::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.55;
+}
+
+.status.saving {
+  color: var(--muted);
+}
+
+.status.saved {
+  color: var(--good);
+}
+
+.status.error {
+  color: var(--bad);
+}
+
+/* Only the words go on small screens; the dot keeps saying the same thing. */
+@media (max-width: 560px) {
+  .status span {
+    display: none;
+  }
+}
+
+.foot {
+  position: static;
+  margin-top: auto;
+  border-bottom: none;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--muted);
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
+}
+
+.links {
+  margin-left: auto;
+  display: flex;
+  gap: 14px;
+}
+
+.links a {
+  color: var(--muted);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+}
+
+.links a:hover {
+  color: var(--accent);
+  border-bottom-color: currentColor;
+}
+
+/* ------------------------------------------------------------------ main */
+
+main {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 20px max(16px, env(safe-area-inset-left)) 40px
+    max(16px, env(safe-area-inset-right));
+}
+
+.compose {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  padding: 14px 16px 10px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.compose:focus-within {
+  border-color: var(--accent);
+  box-shadow: var(--shadow), 0 0 0 3px var(--accent-soft);
+}
+
+textarea {
+  display: block;
+  width: 100%;
+  border: none;
+  padding: 0;
+  margin: 0;
+  resize: none;
+  overflow: hidden;
+  font: inherit;
+  color: inherit;
+  background: none;
+  outline: none;
+}
+
+textarea::placeholder {
+  color: var(--muted);
+}
+
+.compose-foot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+  min-height: 30px;
+}
+
+.hint {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+kbd {
+  font: inherit;
+  font-size: 11.5px;
+  padding: 1px 5px;
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: var(--bg);
+}
+
+/* On a narrow screen the reminder costs a whole line; the button says enough. */
+@media (max-width: 430px) {
+  .hint {
+    display: none;
+  }
+}
+
+#add {
+  margin-left: auto;
+  flex: none;
+  padding: 6px 16px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 550;
+  color: #fff;
+  background: var(--accent);
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+#add:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+#add:not(:disabled):hover {
+  filter: brightness(1.07);
+}
+
+/* ------------------------------------------------------------------ notes */
+
+.empty {
+  margin: 40px 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.note {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  padding: 12px 14px 8px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.note:focus-within {
+  border-color: var(--accent);
+  box-shadow: var(--shadow), 0 0 0 3px var(--accent-soft);
+}
+
+.note.pinned {
+  border-left: 3px solid var(--accent);
+}
+
+.note.unsaved {
+  border-style: dashed;
+}
+
+.note-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  min-height: 26px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.tools {
+  margin-left: auto;
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.note:hover .tools,
+.note:focus-within .tools,
+.tools:focus-within {
+  opacity: 1;
+}
+
+/* Nothing hovers on a touch screen, so the tools simply stay out. */
+@media (hover: none) {
+  .tools {
+    opacity: 1;
+  }
+}
+
+.tools button {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 26px;
+  padding: 0;
+  color: var(--muted);
+  background: none;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.tools button:hover {
+  color: var(--ink);
+  background: var(--bg);
+}
+
+.tools button[aria-pressed='true'] {
+  color: var(--accent);
+}
+
+.tools button[data-act='del']:hover {
+  color: var(--bad);
+}
+
+.tools svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ------------------------------------------------------------------ toast */
+
+/* `display: flex` below would beat the browser's own [hidden] rule, and the
+   pill would hang there empty. This puts it back. */
+.toast[hidden] {
+  display: none;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(24px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: calc(100vw - 32px);
+  padding: 9px 10px 9px 16px;
+  font-size: 14px;
+  color: #f7f5f1;
+  background: #26282d;
+  border-radius: 999px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.28);
+}
+
+.toast button {
+  flex: none;
+  padding: 4px 12px;
+  font: inherit;
+  font-weight: 550;
+  color: #ffd7b8;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.toast button:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .toast {
+    animation: rise 0.18s ease-out;
+  }
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translate(-50%, 8px);
+    }
+  }
+}

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Быстрые заметки">
+  <rect width="512" height="512" rx="112" fill="#faf8f4" />
+  <path d="M136 112h180l60 60v228a28 28 0 0 1-28 28H136a28 28 0 0 1-28-28V140a28 28 0 0 1 28-28z"
+        fill="#fff" stroke="#b1552a" stroke-width="20" stroke-linejoin="round" />
+  <path d="M316 112v60h60" fill="none" stroke="#b1552a" stroke-width="20" stroke-linejoin="round" />
+  <g stroke="#d9b39b" stroke-width="18" stroke-linecap="round">
+    <path d="M156 236h140M156 288h140M156 340h84" />
+  </g>
+  <path d="M300 372l112-112 36 36-112 112-48 12z"
+        fill="#faf8f4" stroke="#b1552a" stroke-width="20" stroke-linejoin="round" />
+</svg>

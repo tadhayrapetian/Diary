@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Быстрые заметки</title>
+    <meta name="description" content="Быстрые заметки с сохранением на диск." />
+    <meta name="theme-color" content="#faf8f4" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#16171a" media="(prefers-color-scheme: dark)" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Заметки" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./icon.svg" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="bar">
+      <h1>Заметки</h1>
+      <input
+        id="search"
+        class="search"
+        type="search"
+        autocomplete="off"
+        placeholder="Поиск"
+        aria-label="Поиск по заметкам"
+      />
+      <span id="status" class="status" role="status" aria-live="polite"></span>
+    </header>
+
+    <main>
+      <form id="compose-form" class="compose" autocomplete="off">
+        <textarea
+          id="compose"
+          rows="1"
+          placeholder="Быстрая заметка…"
+          aria-label="Новая заметка"
+        ></textarea>
+        <div class="compose-foot">
+          <p class="hint">
+            <kbd>Enter</kbd> — сохранить · <kbd>Shift</kbd>+<kbd>Enter</kbd> — перенос строки
+          </p>
+          <button id="add" type="submit">Сохранить</button>
+        </div>
+      </form>
+
+      <p id="empty" class="empty" hidden></p>
+      <section id="list" class="list" aria-label="Сохранённые заметки"></section>
+    </main>
+
+    <footer class="bar foot">
+      <span id="count" class="count"></span>
+      <nav class="links">
+        <a href="/api/export.md" download>Выгрузить .md</a>
+        <a href="/api/export.json" download>.json</a>
+      </nav>
+    </footer>
+
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden>
+      <span id="toast-text"></span>
+      <button id="toast-action" type="button" hidden></button>
+    </div>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

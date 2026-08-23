@@ -145,3 +145,17 @@ It is written to be charming and to be genuinely useful — a diary that only
 purrs is a toy. It grows more familiar the longer you write to it, which is the
 point of the character. It will not give you genuinely dangerous instructions; it
 declines the way a clever, well-bred boy declines, and moves on.
+
+---
+
+## Also in this repo
+
+`notes/` is a second, unrelated program that shares nothing with the diary but
+the folder: quick notes, saved without being asked. No key, no model, nothing
+leaving the machine.
+
+```bash
+npm run notes
+```
+
+Its own README is [notes/README.md](notes/README.md).
