@@ -12,6 +12,8 @@
 export const TAGS = new Set([
   'TITLE', 'KICKER', 'DECK', 'BYLINE', 'SUMMARY',
   'H2', 'H3', 'P', 'QUOTE', 'PULL', 'LI', 'NLI', 'NOTE', 'TERM', 'HR',
+  // Facing pages: the author's own words, standing above the translation.
+  'SRC',
 ]);
 
 /** `QUOTE text :: attribution` — the separator, kept out of prose by being odd. */
@@ -48,6 +50,8 @@ export function parseLine(line) {
       return { type: 'h3', text: body };
     case 'PULL':
       return { type: 'pull', text: body };
+    case 'SRC':
+      return { type: 'src', text: body };
     case 'LI':
       return { type: 'li', text: body };
     case 'NLI':
@@ -187,6 +191,10 @@ export function blockToHtml(block, options = {}) {
       return `<p class="a-p${options.lead ? ' a-lead' : ''}">${inline(block.text)}</p>`;
     case 'pull':
       return `<aside class="a-pull">${inline(block.text)}</aside>`;
+    case 'src':
+      return `<p class="a-src" lang="${escapeHtml(options.sourceLang || '')}">${inline(
+        block.text,
+      )}</p>`;
     case 'note':
       return `<aside class="a-note">${inline(block.text)}</aside>`;
     case 'li':

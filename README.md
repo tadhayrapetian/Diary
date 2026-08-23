@@ -5,7 +5,7 @@ Two small apps that share a repo, a key and a dependency.
 | | |
 |---|---|
 | **[T. M. Riddle](#t-m-riddle)** | A diary that writes back. Write with an Apple Pencil; the page answers in its own hand. `npm start` |
-| **[Lectern](reader/README.md)** | Paste anything — a text, a PDF, a book, a link — and read it set as a proper article, tapping any word for what it means, how it sounds, and what it is in your language. `npm run reader` |
+| **[Lectern](reader/README.md)** | Paste anything — a text, a PDF, a book, a link — and read it set as a proper article, or translated whole into your own language, or with the two facing each other. Tap any word for what it means, how it sounds, and what it is. `npm run reader` |
 
 Both read the same `.env`, and neither needs a key to run: each falls back to
 something honest and says so at startup.

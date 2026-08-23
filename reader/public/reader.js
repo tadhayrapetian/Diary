@@ -14,7 +14,7 @@ import {
 } from './blocks.js';
 
 const BLOCK_SELECTOR =
-  '.a-p,.a-h2,.a-h3,.a-li,.a-quote,.a-pull,.a-note,.a-deck,.a-title,.a-summary,.a-kicker';
+  '.a-p,.a-src,.a-h2,.a-h3,.a-li,.a-quote,.a-pull,.a-note,.a-deck,.a-title,.a-summary,.a-kicker';
 
 const SENTENCE_END = /[.!?…。！？]["'’”»)\]]?\s/g;
 
@@ -55,6 +55,9 @@ export class Reader {
     this.onWord = options.onWord;
     this.onHeadings = options.onHeadings;
     this.onMeta = options.onMeta;
+    this.onFacing = options.onFacing;
+    this.mode = 'typeset';
+    this.sourceLang = '';
 
     this.article.addEventListener('click', (event) => {
       const word = event.target.closest('w-');
@@ -80,6 +83,7 @@ export class Reader {
     this.terms = [];
     this.ruled = false;
     this.hasLead = false;
+    this.facing = false;
     this.title = '';
     this.words = 0;
 
@@ -88,9 +92,17 @@ export class Reader {
     );
   }
 
+  /** What is being read, which decides the drop cap and the word languages. */
+  setMode(mode, sourceLang = '') {
+    this.mode = mode || 'typeset';
+    this.sourceLang = sourceLang;
+  }
+
   /** Render a whole article at once — a piece taken back off the shelf. */
   render(protocol) {
+    const { mode, sourceLang } = this;
     this.reset();
+    this.setMode(mode, sourceLang);
     this.stream.push(protocol);
     this.stream.end();
   }
@@ -111,8 +123,14 @@ export class Reader {
       return;
     }
 
-    // The first paragraph carries the drop cap.
-    const lead = block.type === 'p' && !this.hasLead;
+    if (block.type === 'src' && !this.facing) {
+      this.facing = true;
+      this.onFacing?.(true);
+    }
+
+    // The first paragraph carries the drop cap — but not on facing pages, where
+    // the original stands above it and there is nothing for it to lead.
+    const lead = block.type === 'p' && !this.hasLead && !this.facing;
     if (lead && done) this.hasLead = true;
 
     // A rule separates the article's name from its body.
@@ -124,7 +142,7 @@ export class Reader {
     }
 
     const id = block.type === 'h2' || block.type === 'h3' ? `s${index}` : '';
-    const html = blockToHtml(block, { lead, id });
+    const html = blockToHtml(block, { lead, id, sourceLang: this.sourceLang });
     if (!html) return;
 
     const existing = this.nodes[index];

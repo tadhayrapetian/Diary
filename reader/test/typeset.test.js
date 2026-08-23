@@ -1,7 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { chunkText, createProtocolFilter, typesetWithModel } from '../server/typeset.js';
+import {
+  chunkText,
+  createProtocolFilter,
+  typesetWithModel,
+  pieceCount,
+  nameOfLanguage,
+} from '../server/typeset.js';
 import { typesetLocally } from '../server/local.js';
 import { lookUp, languageName } from '../server/lexicon.js';
 
@@ -78,6 +84,7 @@ function stubClient(scripts) {
       finalMessage: async () => ({
         stop_reason: script.stop || 'end_turn',
         stop_details: script.details || null,
+        content: [{ type: 'text', text: (script.chunks || []).join('') }],
       }),
     };
   };
@@ -96,6 +103,7 @@ const deps = (client, extra = {}) => ({
   onText: extra.onText,
   onProgress: extra.onProgress,
   signal: extra.signal,
+  surveyPrompt: extra.surveyPrompt,
 });
 
 test('streams a single piece straight through', async () => {
@@ -179,30 +187,157 @@ test('a refusal is reported in the article rather than swallowed', async () => {
   assert.match(out, /NOTE .*it declined/);
 });
 
-test('a failure with nothing written yet is thrown, not hidden', async () => {
+test('a piece is given a second round before it is given up on', async () => {
   const client = stubClient([
-    { throws: new Error('down') },
-    { throws: new Error('down') },
-    { throws: new Error('down') },
+    { throws: new Error('flaky') },
+    { throws: new Error('flaky') },
+    { throws: new Error('flaky') },
+    { chunks: ['TITLE Recovered on the second round\n'] },
   ]);
+  let out = '';
+  await typesetWithModel({ text: 'source', meta: {} }, deps(client, { onText: (t) => (out += t) }));
+  assert.match(out, /Recovered on the second round/);
+});
+
+test('a failure with nothing written yet is thrown, not hidden', async () => {
+  const down = { throws: new Error('down') };
+  const client = stubClient(Array.from({ length: 8 }, () => down));
   await assert.rejects(
     () => typesetWithModel({ text: 'source', meta: {} }, deps(client, { onText: () => {} })),
     /down/,
   );
 });
 
-test('a failure partway through keeps what was already set', async () => {
-  const long = ['x'.repeat(20_000), 'y'.repeat(20_000)].join('\n\n');
+test('a book carries on past a piece that will not come', async () => {
+  const long = ['x'.repeat(20_000), 'y'.repeat(20_000), 'z'.repeat(20_000)].join('\n\n');
+  const down = { throws: new Error('down') };
   const client = stubClient([
     { chunks: ['TITLE A\nP One.\n'] },
-    { throws: new Error('down') },
-    { throws: new Error('down') },
-    { throws: new Error('down') },
+    down, down, down, down, down, down, // the second piece, both rounds
+    { chunks: ['P Three.\n'] },
   ]);
   let out = '';
   await typesetWithModel({ text: long, meta: {} }, deps(client, { onText: (t) => (out += t) }));
   assert.match(out, /TITLE A/);
-  assert.match(out, /NOTE The rest of this document could not be set out/);
+  assert.match(out, /NOTE Piece 2 of 3 could not be done/);
+  assert.match(out, /P Three\./, 'the piece after the failure is still done');
+});
+
+// ------------------------------------------------------------------ translating
+
+test('a translation is asked for in the target language, and told the source', async () => {
+  const client = stubClient([{ chunks: ['TITLE Ледяной дом\n'] }]);
+  await typesetWithModel(
+    {
+      text: 'source',
+      meta: { title: 'The House of Ice' },
+      mode: 'translate',
+      sourceLang: 'en',
+      targetLang: 'ru',
+    },
+    deps(client, { onText: () => {} }),
+  );
+  const framing = client.calls[0].messages[0].content[0].text;
+  assert.match(framing, /Translate the following into Russian/);
+  assert.match(framing, /written in English/);
+  assert.match(framing, /title as "The House of Ice"/);
+});
+
+test('terms settled in one piece are handed to the next', async () => {
+  const long = ['x'.repeat(28_000), 'y'.repeat(28_000)].join('\n\n');
+  const client = stubClient([
+    { chunks: ['P Одна.\nTERM Ravenwood :: Рейвенвуд\nTERM the Warden :: Смотритель\n'] },
+    { chunks: ['P Две.\n'] },
+  ]);
+  await typesetWithModel(
+    { text: long, mode: 'translate', sourceLang: 'en', targetLang: 'ru', meta: {} },
+    deps(client, { onText: () => {} }),
+  );
+  const second = client.calls[1].messages[0].content[0].text;
+  assert.match(second, /Terms already settled/);
+  assert.match(second, /Ravenwood = Рейвенвуд/);
+  assert.match(second, /the Warden = Смотритель/);
+  assert.match(second, /resume mid-sentence/);
+});
+
+test('the whole work is read once before any of it is translated', async () => {
+  const long = ['x'.repeat(28_000), 'y'.repeat(28_000)].join('\n\n');
+  const client = stubClient([
+    // The survey: one read of everything, a short note back.
+    {
+      chunks: [
+        'INTO Russian\n',
+        'REGISTER A wry first-person memoir, spoken rather than written.\n',
+        'ADDRESS The narrator is familiar with his brother and formal with everyone else.\n',
+        'TERM Ravenwood :: Рейвенвуд\nTERM the Warden :: Смотритель\n',
+      ],
+    },
+    { chunks: ['TITLE Рейвенвуд\nP Одна.\n'] },
+    { chunks: ['P Две.\n'] },
+  ]);
+
+  const progress = [];
+  await typesetWithModel(
+    { text: long, mode: 'translate', sourceLang: 'en', targetLang: 'ru', meta: {} },
+    deps(client, {
+      onText: () => {},
+      onProgress: (p) => progress.push(p),
+      surveyPrompt: 'survey prompt',
+    }),
+  );
+
+  assert.equal(client.calls.length, 3, 'one survey, then the two pieces');
+  assert.match(client.calls[0].messages[0].content, /translating this into Russian/);
+
+  // The first piece already knows the names the last piece will use.
+  const first = client.calls[1].messages[0].content[0].text;
+  assert.match(first, /Ravenwood = Рейвенвуд/);
+  assert.match(first, /the Warden = Смотритель/);
+  assert.match(first, /wry first-person memoir/);
+  assert.match(first, /familiar with his brother/);
+
+  assert.deepEqual(progress[0], { piece: 0, of: 2, surveying: true });
+});
+
+test('a failed survey is a shrug, not a stopped book', async () => {
+  const long = ['x'.repeat(28_000), 'y'.repeat(28_000)].join('\n\n');
+  const client = stubClient([
+    { throws: new Error('survey down') },
+    { chunks: ['TITLE Всё равно\n'] },
+    { chunks: ['P Две.\n'] },
+  ]);
+  let out = '';
+  await typesetWithModel(
+    { text: long, mode: 'translate', sourceLang: 'en', targetLang: 'ru', meta: {} },
+    deps(client, { onText: (t) => (out += t), surveyPrompt: 'survey prompt' }),
+  );
+  assert.match(out, /TITLE Всё равно/);
+  assert.match(out, /P Две\./);
+});
+
+test('short pieces and plain typesetting are not surveyed', async () => {
+  const client = stubClient([{ chunks: ['TITLE Short\n'] }]);
+  await typesetWithModel(
+    { text: 'A short text.', mode: 'translate', sourceLang: 'en', targetLang: 'ru', meta: {} },
+    deps(client, { onText: () => {}, surveyPrompt: 'survey prompt' }),
+  );
+  assert.equal(client.calls.length, 1, 'nothing to hold together, so no survey');
+});
+
+test('facing pages are cut smaller, since both languages come back', () => {
+  const text = Array.from({ length: 120 }, (_, i) => `Paragraph ${i} `.repeat(60)).join('\n\n');
+  assert.ok(
+    pieceCount(text, 'bilingual') > pieceCount(text, 'translate'),
+    'more pieces when each one has to carry the original too',
+  );
+  assert.ok(pieceCount(text, 'translate') >= 1);
+});
+
+test('a truncated piece says so rather than pretending to be whole', async () => {
+  const client = stubClient([{ chunks: ['P Something long\n'], stop: 'max_tokens' }]);
+  let out = '';
+  await typesetWithModel({ text: 'source', meta: {} }, deps(client, { onText: (t) => (out += t) }));
+  assert.match(out, /NOTE A long stretch here ran past the limit/);
 });
 
 // ---------------------------------------------------------- the local fallback

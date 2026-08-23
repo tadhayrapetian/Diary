@@ -991,11 +991,157 @@ body.mark-saved w-.saved {
   background: var(--accent-wash);
 }
 
+/* --------------------------------------------------- what to do with it */
+
+.modes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+  gap: 0.5rem;
+}
+.modes button {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  align-items: flex-start;
+  text-align: left;
+  padding: 0.7rem 0.85rem;
+  background: transparent;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  color: var(--ink-soft);
+  transition: border-color 0.15s, background-color 0.15s;
+}
+.modes button b { font-size: 0.92rem; font-weight: 600; color: var(--ink); }
+.modes button span { font-size: 0.76rem; line-height: 1.35; }
+.modes button:hover { border-color: var(--ink-faint); }
+.modes button[aria-checked='true'] {
+  border-color: var(--accent);
+  background: var(--accent-wash);
+}
+.modes button[aria-checked='true'] b { color: var(--accent); }
+.modes button:disabled { opacity: 0.45; cursor: default; }
+
+.direction {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+.direction-side { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.3rem; }
+.direction-side span {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.direction select {
+  width: 100%;
+  padding: 0.55rem 0.6rem;
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: 9px;
+}
+.swap {
+  flex: none;
+  width: 2.3rem;
+  height: 2.3rem;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: 1px solid var(--rule);
+  border-radius: 50%;
+  color: var(--ink-soft);
+}
+.swap svg { width: 17px; height: 17px; }
+.swap:hover { border-color: var(--accent); color: var(--accent); }
+
+.estimate {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+.estimate b { color: var(--ink); font-weight: 600; }
+.estimate.heavy {
+  border-left: 2px solid var(--accent-soft);
+  padding-left: 0.7rem;
+}
+
+/* ------------------------------------------------------ work in progress */
+
+.running {
+  margin-top: 1.6rem;
+  padding: 0.9rem 1rem 0.8rem;
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+}
+.running-face {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.running-what { display: flex; flex-direction: column; min-width: 0; }
+.running-what strong { font-size: 0.95rem; font-weight: 550; }
+.running-facts { font-size: 0.82rem; color: var(--ink-soft); }
+.running-actions { display: flex; gap: 0.5rem; }
+
+.meter {
+  height: 3px;
+  margin-top: 0.75rem;
+  background: var(--rule-soft);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.meter i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--accent);
+  transition: width 0.4s ease-out;
+}
+/* Before the first piece lands there is nothing to measure, so it paces. */
+.meter i.waiting {
+  width: 30% !important;
+  animation: pace 1.6s ease-in-out infinite;
+}
+@keyframes pace {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(333%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .meter i.waiting { animation: none; width: 100% !important; opacity: 0.4; }
+}
+
+/* ------------------------------------------------------- facing pages */
+
+.a-src {
+  margin: 0 0 0.3em;
+  color: var(--ink-faint);
+  font-size: 0.88em;
+  line-height: 1.5;
+  border-left: 2px solid var(--rule-soft);
+  padding-left: 0.85em;
+}
+.a-src + .a-p,
+.a-src + .a-h2,
+.a-src + .a-h3 { margin-top: 0; }
+.a-src + .a-h2, .a-src + .a-h3 { margin-top: 0.2em; }
+
+body.hide-source .a-src { display: none; }
+body.hide-source .a-src + .a-h2 { margin-top: 2.1em; }
+
+@media (min-width: 60rem) {
+  .a-src { font-size: 0.85em; }
+}
+
 /* -------------------------------------------------------------------- print */
 
 @media print {
   .bar, .toc, .progress, .card, .panel, .panel-scrim, .card-scrim,
-  .selection-cue, .article-end { display: none !important; }
+  .selection-cue, .article-end, .running { display: none !important; }
   body { background: #fff; color: #000; }
   .article { max-width: none; font-size: 11.5pt; }
   w- { background: none !important; color: inherit !important; box-shadow: none !important; }

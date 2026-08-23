@@ -127,6 +127,16 @@ test('renders the blocks it is given', () => {
   assert.equal(blockToHtml({ type: 'term', word: 'a', gloss: 'b' }), '');
 });
 
+test('facing pages pair the original with the translation', () => {
+  assert.deepEqual(parseLine('SRC It was a bright cold day.'), {
+    type: 'src',
+    text: 'It was a bright cold day.',
+  });
+  const html = blockToHtml({ type: 'src', text: 'A line.' }, { sourceLang: 'en' });
+  assert.match(html, /^<p class="a-src" lang="en">/);
+  assert.match(html, /<w->A<\/w-> <w->line<\/w->\./);
+});
+
 test('reading time never rounds down to nothing', () => {
   assert.equal(readingMinutes(3), 1);
   assert.equal(readingMinutes(2200), 10);

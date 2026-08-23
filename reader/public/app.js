@@ -1,6 +1,10 @@
 /**
  * The shell: the desk, the shelf, the panels, and the wiring between the page
- * you are reading and the server that set it.
+ * you are reading and the work going on behind it.
+ *
+ * Work is a job on the server, not a request from this tab. Starting one hands
+ * back an id; the page attaches to that id and can attach again later. Closing
+ * the tab in the middle of a book costs nothing.
  */
 
 import { Reader, sentenceAround } from './reader.js';
@@ -15,7 +19,6 @@ const el = {
   reading: $('reading'),
   intake: $('intake'),
   source: $('source'),
-  drop: $('drop'),
   dropHint: $('dropHint'),
   file: $('file'),
   fileCard: $('fileCard'),
@@ -23,8 +26,20 @@ const el = {
   fileIcon: $('fileIcon'),
   fileFacts: $('fileFacts'),
   fileClear: $('fileClear'),
+  modes: $('modes'),
+  direction: $('direction'),
+  fromLang: $('fromLang'),
+  intoLang: $('intoLang'),
+  swap: $('swap'),
+  estimate: $('estimate'),
   go: $('go'),
   note: $('intakeNote'),
+  running: $('running'),
+  runningTitle: $('runningTitle'),
+  runningFacts: $('runningFacts'),
+  runningMeter: $('runningMeter'),
+  runningOpen: $('runningOpen'),
+  runningStop: $('runningStop'),
   shelf: $('shelf'),
   shelfList: $('shelfList'),
   engine: $('engine'),
@@ -33,6 +48,7 @@ const el = {
   glossaryList: $('glossaryList'),
   toc: $('toc'),
   tocToggle: $('tocToggle'),
+  facingToggle: $('facingToggle'),
   barTitle: $('barTitle'),
   barStatus: $('barStatus'),
   back: $('back'),
@@ -61,11 +77,6 @@ const el = {
   selectionLook: $('selectionLook'),
 };
 
-// ------------------------------------------------------------------ settings
-
-const SETTINGS_KEY = 'lectern.settings.v1';
-const SHELF_KEY = 'lectern.shelf.v1';
-
 const LANGUAGES = [
   ['ru', 'Russian'], ['en', 'English'], ['es', 'Spanish'], ['fr', 'French'],
   ['de', 'German'], ['it', 'Italian'], ['pt', 'Portuguese'], ['nl', 'Dutch'],
@@ -74,8 +85,13 @@ const LANGUAGES = [
   ['ko', 'Korean'], ['zh', 'Chinese'], ['vi', 'Vietnamese'], ['id', 'Indonesian'],
   ['sv', 'Swedish'], ['cs', 'Czech'], ['el', 'Greek'], ['ro', 'Romanian'],
   ['hu', 'Hungarian'], ['hy', 'Armenian'], ['ka', 'Georgian'], ['sr', 'Serbian'],
-  ['bg', 'Bulgarian'], ['kk', 'Kazakh'], ['az', 'Azerbaijani'],
+  ['bg', 'Bulgarian'], ['kk', 'Kazakh'], ['az', 'Azerbaijani'], ['la', 'Latin'],
 ];
+const nameOf = (code) => LANGUAGES.find(([c]) => c === code)?.[1] || code;
+
+// ------------------------------------------------------------------ settings
+
+const SETTINGS_KEY = 'lectern.settings.v1';
 
 const defaults = {
   targetLang: 'ru',
@@ -84,6 +100,7 @@ const defaults = {
   measure: 34,
   justify: false,
   markSaved: true,
+  showSource: true,
 };
 
 function loadSettings() {
@@ -104,6 +121,8 @@ function applySettings() {
   root.style.setProperty('--measure', `${settings.measure}rem`);
   root.style.setProperty('--align', settings.justify ? 'justify' : 'left');
   el.body.classList.toggle('mark-saved', settings.markSaved);
+  el.body.classList.toggle('hide-source', !settings.showSource);
+  el.facingToggle.classList.toggle('on', settings.showSource);
 
   el.sizeValue.textContent = `${settings.size}px`;
   el.measureValue.textContent = `${settings.measure} rem`;
@@ -122,84 +141,27 @@ function applySettings() {
   }
 }
 
-// --------------------------------------------------------------------- shelf
-
-function loadShelf() {
-  try {
-    return JSON.parse(localStorage.getItem(SHELF_KEY)) || [];
-  } catch {
-    return [];
-  }
-}
-
-function saveShelf(items) {
-  // Keep the shelf under the storage cap by dropping the oldest pieces first.
-  let kept = items.slice(0, 40);
-  for (;;) {
-    try {
-      localStorage.setItem(SHELF_KEY, JSON.stringify(kept));
-      return kept;
-    } catch {
-      if (kept.length <= 1) return kept;
-      kept = kept.slice(0, Math.max(1, kept.length - 3));
-    }
-  }
-}
-
-function shelvePiece(piece) {
-  const items = loadShelf().filter((item) => item.id !== piece.id);
-  items.unshift(piece);
-  drawShelf(saveShelf(items));
-}
-
-function drawShelf(items = loadShelf()) {
-  el.shelfList.textContent = '';
-  el.shelf.hidden = !items.length;
-  for (const item of items) {
-    const li = document.createElement('li');
-    const open = document.createElement('button');
-    open.type = 'button';
-    open.className = 'shelf-item';
-    const title = document.createElement('b');
-    title.textContent = item.title || 'Untitled';
-    const facts = document.createElement('span');
-    facts.textContent = `${item.minutes} min`;
-    open.append(title, facts);
-    open.addEventListener('click', () => openShelved(item));
-
-    const drop = document.createElement('button');
-    drop.type = 'button';
-    drop.className = 'shelf-drop';
-    drop.textContent = '×';
-    drop.title = 'Take it off the shelf';
-    drop.addEventListener('click', (event) => {
-      event.stopPropagation();
-      drawShelf(saveShelf(loadShelf().filter((other) => other.id !== item.id)));
-    });
-
-    const row = document.createElement('div');
-    row.style.display = 'flex';
-    row.style.alignItems = 'center';
-    row.append(open, drop);
-    li.append(row);
-    el.shelfList.append(li);
-  }
-}
-
-// ------------------------------------------------------------------- reading
-
-const readingLine = (words, minutes) =>
-  `${words.toLocaleString()} words · about ${minutes} minute${minutes === 1 ? '' : 's'}`;
+// --------------------------------------------------------------------- state
 
 const saved = new SavedWords();
 
 const state = {
+  mode: 'typeset',
+  fromLang: 'en',
+  source: null, // what /api/extract found: token, words, pieces, meta
+  jobId: null,
+  articleLang: '',
+  originalLang: '',
   title: '',
-  sourceLang: 'en',
-  piece: null,
   streaming: false,
-  abort: null,
+  attached: null,
+  local: false,
+  fast: false,
+  armed: false, // a long job has been asked about and is waiting on a second click
 };
+
+const readingLine = (words, minutes) =>
+  `${words.toLocaleString()} words · about ${minutes} minute${minutes === 1 ? '' : 's'}`;
 
 const card = new WordCard({
   element: el.card,
@@ -224,67 +186,316 @@ const reader = new Reader({
   onHeadings: (count) => {
     el.tocToggle.hidden = count < 3;
   },
+  onFacing: (facing) => {
+    el.facingToggle.hidden = !facing;
+  },
   onWord: (element, override) => {
     const word = (override || element.textContent || '').trim();
     if (!word) return;
+
+    // On facing pages the two columns are in different languages, so which one
+    // the word came from decides both what it is and what to render it into.
+    const inOriginal = Boolean(element.closest?.('.a-src'));
+    const wordLang = (inOriginal ? state.originalLang : state.articleLang) || 'en';
+    const into =
+      wordLang.slice(0, 2) === settings.targetLang.slice(0, 2)
+        ? state.originalLang || 'en'
+        : settings.targetLang;
+
     card.open(element, {
       word,
       sentence: override ? '' : sentenceAround(element),
       title: state.title,
-      sourceLang: state.sourceLang,
-      targetLang: settings.targetLang,
+      sourceLang: wordLang,
+      targetLang: into,
     });
   },
 });
 
-/**
- * Marking saved words walks every word on the page, so while the article is
- * still arriving it runs on a timer rather than on every chunk.
- */
-let markTimer = 0;
-function markSavedSoon() {
-  if (markTimer) return;
-  markTimer = setTimeout(() => {
-    markTimer = 0;
-    reader.markSaved((word) => saved.has(word));
-  }, 500);
-}
+// ------------------------------------------------------- estimating the work
 
 /**
- * Which language is this written in? Enough of an answer to pick a voice and
- * tell the dictionary what it is looking at.
+ * Published Claude Opus 5 rates, in dollars per million tokens. A book is not a
+ * free thing to translate and the reader deserves the number before the click,
+ * not on a statement at the end of the month.
  */
-function guessLanguage(text) {
-  const sample = text.slice(0, 4000);
-  const scripts = [
-    [/[Ѐ-ӿ]/g, 'ru'], [/[Ͱ-Ͽ]/g, 'el'],
-    [/[֐-׿]/g, 'he'], [/[؀-ۿ]/g, 'ar'],
-    [/[԰-֏]/g, 'hy'], [/[Ⴀ-ჿ]/g, 'ka'],
-    [/[ऀ-ॿ]/g, 'hi'], [/[぀-ヿ]/g, 'ja'],
-    [/[가-힯]/g, 'ko'], [/[一-鿿]/g, 'zh'],
-  ];
-  for (const [pattern, code] of scripts) {
-    if ((sample.match(pattern) || []).length > sample.length * 0.08) return code;
-  }
-  const words = sample.toLowerCase().match(/[a-zà-ÿ]+/g) || [];
-  const counts = { en: 0, es: 0, fr: 0, de: 0, it: 0, pt: 0, nl: 0 };
-  const markers = {
-    en: ['the', 'and', 'of', 'that', 'with', 'was'],
-    es: ['que', 'los', 'las', 'por', 'una', 'del'],
-    fr: ['les', 'des', 'est', 'une', 'dans', 'pour'],
-    de: ['und', 'der', 'die', 'das', 'nicht', 'mit'],
-    it: ['che', 'gli', 'per', 'con', 'una', 'del'],
-    pt: ['que', 'nao', 'uma', 'com', 'dos', 'para'],
-    nl: ['het', 'een', 'van', 'niet', 'dat', 'zijn'],
-  };
-  for (const word of words) {
-    for (const [code, list] of Object.entries(markers)) {
-      if (list.includes(word)) counts[code]++;
-    }
-  }
-  const best = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
-  return best && best[1] > 3 ? best[0] : 'en';
+const RATE = { input: 5, output: 25 };
+/** Roughly what a streamed reply manages, in tokens a second. */
+const TOKENS_PER_SECOND = 70;
+
+function estimate(words, mode) {
+  const input = words * 1.4;
+  // Translating runs longer than the original, and Cyrillic costs more tokens
+  // per character than Latin; facing pages emit the original as well.
+  const factor = mode === 'bilingual' ? 2.6 : mode === 'translate' ? 1.7 : 1.15;
+  const output = input * factor;
+  const dollars = (input * RATE.input + output * RATE.output) / 1e6;
+  const seconds = (output / TOKENS_PER_SECOND) * (state.fast ? 0.45 : 1);
+  return { dollars, minutes: Math.max(1, Math.round(seconds / 60)) };
 }
+
+const money = (dollars) =>
+  dollars < 0.1 ? 'a few cents' : dollars < 1 ? `about $${dollars.toFixed(2)}` : `about $${dollars.toFixed(dollars < 10 ? 1 : 0)}`;
+
+function drawEstimate() {
+  const source = state.source;
+  if (!source || !source.words) {
+    el.estimate.hidden = true;
+    return;
+  }
+  const pieces = source.pieces?.[state.mode] ?? 1;
+  const { dollars, minutes } = estimate(source.words, state.mode);
+  const heavy = minutes >= 10 || dollars >= 1;
+
+  const parts = [`<b>${source.words.toLocaleString()}</b> words`];
+  if (source.pages) parts.push(`${source.pages} pages`);
+  if (state.mode === 'typeset' && !heavy) {
+    parts.push(`about ${readingMinutes(source.words)} minutes to read`);
+  }
+  if (pieces > 1) parts.push(`${pieces} pieces`);
+  if (!state.local) {
+    parts.push(`roughly <b>${minutes} min</b> of work`);
+    parts.push(`${money(dollars)} at current rates`);
+  }
+
+  el.estimate.innerHTML = parts.join(' · ');
+  el.estimate.classList.toggle('heavy', heavy && !state.local);
+  el.estimate.hidden = false;
+  state.heavy = heavy && !state.local;
+  disarm();
+}
+
+function disarm() {
+  state.armed = false;
+  el.go.textContent =
+    state.mode === 'typeset'
+      ? 'Set it in type'
+      : state.mode === 'bilingual'
+        ? `Translate it facing the original`
+        : `Translate it into ${nameOf(settings.targetLang)}`;
+}
+
+// --------------------------------------------------------------------- shelf
+
+async function drawShelf() {
+  let pieces = [];
+  try {
+    pieces = (await (await fetch('/api/library')).json()).pieces || [];
+  } catch {
+    pieces = [];
+  }
+
+  const running = pieces.find((piece) => piece.status === 'running');
+  el.running.hidden = !running;
+  if (running) {
+    state.runningId = running.id;
+    el.runningTitle.textContent = running.title || 'Working…';
+    const done = running.progress?.piece || 0;
+    const of = running.progress?.of || running.pieces || 1;
+    el.runningFacts.textContent =
+      done > 0
+        ? `${labelFor(running.mode, running)} · piece ${done} of ${of}`
+        : `${labelFor(running.mode, running)} · reading it through first`;
+    el.runningMeter.classList.toggle('waiting', done === 0);
+    el.runningMeter.style.width = done > 0 ? `${Math.round((done / of) * 100)}%` : '';
+  }
+
+  const shelved = pieces.filter((piece) => piece.status !== 'running');
+  el.shelf.hidden = !shelved.length;
+  el.shelfList.textContent = '';
+
+  for (const piece of shelved) {
+    const li = document.createElement('li');
+    const row = document.createElement('div');
+    row.style.display = 'flex';
+    row.style.alignItems = 'center';
+
+    const open = document.createElement('button');
+    open.type = 'button';
+    open.className = 'shelf-item';
+    const title = document.createElement('b');
+    title.textContent = piece.title || 'Untitled';
+    const facts = document.createElement('span');
+    facts.textContent =
+      piece.status === 'done'
+        ? labelFor(piece.mode, piece)
+        : `${labelFor(piece.mode, piece)} · unfinished`;
+    open.append(title, facts);
+    open.addEventListener('click', () => openShelved(piece.id));
+
+    const drop = document.createElement('button');
+    drop.type = 'button';
+    drop.className = 'shelf-drop';
+    drop.textContent = '×';
+    drop.title = 'Take it off the shelf';
+    drop.addEventListener('click', async (event) => {
+      event.stopPropagation();
+      await fetch(`/api/library/${piece.id}`, { method: 'DELETE' });
+      drawShelf();
+    });
+
+    row.append(open, drop);
+    li.append(row);
+    el.shelfList.append(li);
+  }
+}
+
+const labelFor = (mode, piece) =>
+  mode === 'typeset'
+    ? 'set in type'
+    : `${nameOf(piece.sourceLang)} → ${nameOf(piece.targetLang)}${
+        mode === 'bilingual' ? ', facing' : ''
+      }`;
+
+// ------------------------------------------------------------------ the wire
+
+/** Attach to a job and follow it until it ends or this page looks away. */
+async function follow(id, { onStart } = {}) {
+  state.attached?.abort();
+  const controller = new AbortController();
+  state.attached = controller;
+  state.jobId = id;
+  state.streaming = true;
+
+  let finished = false;
+  try {
+    const response = await fetch(`/api/job/${id}`, { signal: controller.signal });
+    if (!response.ok || !response.body) throw new Error(`the server answered ${response.status}`);
+
+    const stream = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    for (;;) {
+      const { value, done } = await stream.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      let at;
+      while ((at = buffer.indexOf('\n\n')) >= 0) {
+        const frame = buffer.slice(0, at);
+        buffer = buffer.slice(at + 2);
+        let name = '';
+        let data = '';
+        for (const line of frame.split('\n')) {
+          if (line.startsWith('event:')) name = line.slice(6).trim();
+          else if (line.startsWith('data:')) data += line.slice(5).trim();
+        }
+        if (!name || !data) continue;
+        let payload;
+        try {
+          payload = JSON.parse(data);
+        } catch {
+          continue;
+        }
+
+        if (name === 'start') {
+          state.articleLang = payload.mode === 'typeset' ? payload.sourceLang : payload.targetLang;
+          state.originalLang = payload.sourceLang;
+          reader.setMode(payload.mode, payload.sourceLang);
+          onStart?.(payload);
+        } else if (name === 'text') {
+          reader.push(payload.text);
+          markSavedSoon();
+        } else if (name === 'progress') {
+          el.barStatus.textContent = payload.surveying
+            ? 'reading it through'
+            : payload.of > 1
+              ? `piece ${payload.piece} of ${payload.of}`
+              : 'working';
+        } else if (name === 'done' || name === 'failed') {
+          finished = true;
+          if (name === 'failed' && payload.message) el.endNote.textContent = payload.message;
+          break;
+        }
+      }
+      if (finished) break;
+    }
+  } catch (error) {
+    if (error.name !== 'AbortError') {
+      el.endNote.textContent = `Lost touch with the server: ${error.message}`;
+      finished = true;
+    }
+  } finally {
+    if (state.attached === controller) state.attached = null;
+    state.streaming = false;
+  }
+
+  if (!finished) return;
+
+  el.barStatus.textContent = '';
+  const summary = reader.end();
+  reader.markSaved((word) => saved.has(word));
+  el.articleEnd.hidden = false;
+  if (!el.endNote.textContent) {
+    el.endNote.textContent = readingLine(summary.words, summary.minutes);
+  }
+  updateProgress();
+  drawShelf();
+}
+
+async function start() {
+  const source = state.source;
+  const body = {
+    mode: state.mode,
+    sourceToken: source?.sourceToken || '',
+    text: source?.sourceToken ? '' : el.source.value.trim(),
+    meta: source?.meta || {},
+    sourceLang: state.fromLang,
+    targetLang: settings.targetLang,
+  };
+
+  let started;
+  try {
+    const response = await fetch('/api/run', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    started = await response.json();
+    if (!response.ok) throw new Error(started.error || `the server answered ${response.status}`);
+  } catch (error) {
+    say(error.message, true);
+    return;
+  }
+
+  reader.reset();
+  reader.setMode(state.mode, state.fromLang);
+  el.endNote.textContent = '';
+  el.articleEnd.hidden = true;
+  showReading();
+  el.barStatus.textContent = 'starting';
+  follow(started.id);
+}
+
+async function openShelved(id) {
+  let piece;
+  try {
+    piece = await (await fetch(`/api/library/${id}`)).json();
+  } catch {
+    say('That piece could not be opened.', true);
+    return;
+  }
+  state.articleLang = piece.mode === 'typeset' ? piece.sourceLang : piece.targetLang;
+  state.originalLang = piece.sourceLang;
+  state.jobId = id;
+
+  showReading();
+  reader.setMode(piece.mode, piece.sourceLang);
+  reader.render(piece.protocol || '');
+  reader.markSaved((word) => saved.has(word));
+
+  const summary = reader.finish();
+  state.title = summary.title || piece.title || '';
+  el.barTitle.textContent = state.title;
+  document.title = state.title ? `${state.title} — Lectern` : 'Lectern';
+  el.endNote.textContent =
+    piece.status === 'done'
+      ? readingLine(summary.words, summary.minutes)
+      : piece.message || 'This was never finished.';
+  el.articleEnd.hidden = false;
+  updateProgress();
+}
+
+// ------------------------------------------------------------------- screens
 
 function showReading() {
   el.desk.hidden = true;
@@ -297,7 +508,8 @@ function showReading() {
 }
 
 function showDesk() {
-  state.abort?.abort();
+  state.attached?.abort();
+  state.attached = null;
   state.streaming = false;
   card.close();
   el.reading.hidden = true;
@@ -320,137 +532,20 @@ function updateProgress() {
 window.addEventListener('scroll', updateProgress, { passive: true });
 window.addEventListener('resize', updateProgress);
 
-// ------------------------------------------------------------------ the wire
-
-async function streamEvents(url, body, handlers, signal) {
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(body),
-    signal,
-  });
-  if (!response.ok || !response.body) {
-    const detail = await response.json().catch(() => ({}));
-    throw new Error(detail.error || `the server answered ${response.status}`);
-  }
-
-  const stream = response.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = '';
-  for (;;) {
-    const { value, done } = await stream.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    let at;
-    while ((at = buffer.indexOf('\n\n')) >= 0) {
-      const frame = buffer.slice(0, at);
-      buffer = buffer.slice(at + 2);
-      let name = 'message';
-      let data = '';
-      for (const line of frame.split('\n')) {
-        if (line.startsWith('event:')) name = line.slice(6).trim();
-        else if (line.startsWith('data:')) data += line.slice(5).trim();
-      }
-      if (!data) continue;
-      try {
-        handlers[name]?.(JSON.parse(data));
-      } catch {
-        /* a frame we cannot read is a frame we can skip */
-      }
-    }
-  }
-}
-
-async function typeset({ text, meta, pdfToken }) {
-  state.sourceLang = guessLanguage(text || meta?.title || '');
-  reader.reset();
-  el.articleEnd.hidden = true;
-  showReading();
-
-  const controller = new AbortController();
-  state.abort = controller;
-  state.streaming = true;
-  el.barStatus.textContent = 'setting…';
-
-  const id = `p${Date.now().toString(36)}`;
-  try {
-    await streamEvents(
-      '/api/typeset',
-      { text, meta, pdfToken },
-      {
-        text: (event) => {
-          reader.push(event.text);
-          markSavedSoon();
-        },
-        progress: (event) => {
-          el.barStatus.textContent =
-            event.of > 1 ? `setting ${event.piece} of ${event.of}` : 'setting…';
-        },
-        failed: (event) => {
-          el.barStatus.textContent = '';
-          el.endNote.textContent = event.message;
-          el.articleEnd.hidden = false;
-        },
-        done: () => {
-          el.barStatus.textContent = '';
-        },
-      },
-      controller.signal,
-    );
-  } catch (error) {
-    if (error.name !== 'AbortError') {
-      el.barStatus.textContent = '';
-      el.endNote.textContent = `Could not set this: ${error.message}`;
-      el.articleEnd.hidden = false;
-    }
-  } finally {
-    state.streaming = false;
-    state.abort = null;
-  }
-
-  const summary = reader.end();
-  reader.markSaved((word) => saved.has(word));
-  el.articleEnd.hidden = false;
-  if (!el.endNote.textContent) {
-    el.endNote.textContent = readingLine(summary.words, summary.minutes);
-  }
-  updateProgress();
-
-  if (reader.protocol.trim().length > 40) {
-    state.piece = {
-      id,
-      title: summary.title || meta?.title || 'Untitled',
-      protocol: reader.protocol,
-      words: summary.words,
-      minutes: summary.minutes,
-      lang: state.sourceLang,
-      at: Date.now(),
-    };
-    shelvePiece(state.piece);
-  }
-}
-
-function openShelved(piece) {
-  state.sourceLang = piece.lang || 'en';
-  state.piece = piece;
-  showReading();
-  reader.render(piece.protocol);
-  reader.markSaved((word) => saved.has(word));
-  const summary = reader.finish();
-  state.title = summary.title || piece.title;
-  el.barTitle.textContent = state.title;
-  document.title = `${state.title} — Lectern`;
-  el.endNote.textContent = readingLine(
-    piece.words || summary.words,
-    piece.minutes || summary.minutes,
-  );
-  el.articleEnd.hidden = false;
-  updateProgress();
+/**
+ * Marking saved words walks every word on the page, so while the article is
+ * still arriving it runs on a timer rather than on every chunk.
+ */
+let markTimer = 0;
+function markSavedSoon() {
+  if (markTimer) return;
+  markTimer = setTimeout(() => {
+    markTimer = 0;
+    reader.markSaved((word) => saved.has(word));
+  }, 500);
 }
 
 // -------------------------------------------------------------------- intake
-
-let picked = null; // { name, bytes, extracted }
 
 function say(message, bad = false) {
   el.note.textContent = message || '';
@@ -460,18 +555,47 @@ function say(message, bad = false) {
 const prettyBytes = (n) =>
   n > 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`;
 
-function clearFile() {
-  picked = null;
+function clearSource() {
+  state.source = null;
   el.fileCard.hidden = true;
   el.file.value = '';
   el.source.disabled = false;
+  el.estimate.hidden = true;
   say('');
+  disarm();
+}
+
+function tookSource(result, { name, size } = {}) {
+  state.source = result;
+  if (result.lang) {
+    state.fromLang = result.lang;
+    el.fromLang.value = result.lang;
+    if (result.lang === settings.targetLang) {
+      // Nobody wants a translation from Russian into Russian; offer the swap.
+      settings.targetLang = result.lang === 'en' ? 'ru' : 'en';
+      el.intoLang.value = settings.targetLang;
+      el.setLang.value = settings.targetLang;
+      applySettings();
+    }
+  }
+  if (name) {
+    el.fileName.textContent = name;
+    el.fileIcon.textContent = (name.split('.').pop() || 'FILE').toUpperCase().slice(0, 4);
+    el.fileFacts.textContent = result.canRead
+      ? `${result.pages || '?'} pages · a scan, so it will be read by eye`
+      : [size ? prettyBytes(size) : '', result.pages ? `${result.pages} pages` : '', result.lang ? nameOf(result.lang) : '']
+          .filter(Boolean)
+          .join(' · ');
+    el.fileCard.hidden = false;
+    el.source.disabled = true;
+  }
+  drawEstimate();
+  if (result.truncated) say('Very long — only the first part will be used.');
 }
 
 async function takeFile(file) {
   if (!file) return;
-  clearFile();
-  picked = { name: file.name, size: file.size };
+  clearSource();
   el.fileName.textContent = file.name;
   el.fileIcon.textContent = (file.name.split('.').pop() || 'FILE').toUpperCase().slice(0, 4);
   el.fileFacts.textContent = `${prettyBytes(file.size)} · reading…`;
@@ -480,35 +604,21 @@ async function takeFile(file) {
   el.go.disabled = true;
 
   try {
-    const bytes = await file.arrayBuffer();
     const response = await fetch('/api/extract', {
       method: 'POST',
       headers: {
         'content-type': 'application/octet-stream',
         'x-filename': encodeURIComponent(file.name),
       },
-      body: bytes,
+      body: await file.arrayBuffer(),
     });
     const result = await response.json();
-    picked.extracted = result;
-
-    if (result.canRead) {
-      el.fileFacts.textContent = `${result.pages || '?'} pages · no text layer, so it will be read by eye`;
-      say('This looks like a scan. It will be read from the page images.');
-    } else if (!result.ok) {
+    if (!result.ok && !result.canRead) {
       el.fileFacts.textContent = result.reason || 'could not be read';
       say(result.reason || 'That file could not be read.', true);
-      el.go.disabled = false;
       return;
-    } else {
-      const parts = [prettyBytes(file.size)];
-      if (result.pages) parts.push(`${result.pages} pages`);
-      parts.push(`${result.words.toLocaleString()} words`);
-      const minutes = readingMinutes(result.words);
-      parts.push(`about ${minutes} min`);
-      el.fileFacts.textContent = parts.join(' · ');
-      say(result.truncated ? 'Very long — only the first part will be set.' : '');
     }
+    tookSource(result, { name: file.name, size: file.size });
   } catch (error) {
     el.fileFacts.textContent = 'could not be read';
     say(`That file could not be read: ${error.message}`, true);
@@ -519,17 +629,19 @@ async function takeFile(file) {
 
 async function takeUrl(url) {
   say('Fetching that page…');
-  const response = await fetch('/api/fetch', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ url }),
-  });
-  const result = await response.json();
+  const result = await (
+    await fetch('/api/fetch', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ url }),
+    })
+  ).json();
   if (!result.ok && !result.canRead) {
     say(result.reason || 'That page could not be read.', true);
     return null;
   }
   say('');
+  tookSource(result, { name: result.meta?.name || 'page', size: 0 });
   return result;
 }
 
@@ -539,47 +651,70 @@ el.intake.addEventListener('submit', async (event) => {
 
   const typed = el.source.value.trim();
 
-  if (picked?.extracted) {
-    const result = picked.extracted;
-    if (!result.ok && !result.canRead) {
-      say(result.reason || 'That file could not be read.', true);
-      return;
-    }
-    await typeset({
-      text: result.text || '',
-      meta: result.meta || { name: picked.name },
-      pdfToken: result.pdfToken,
-    });
-    return;
-  }
-
-  if (/^https?:\/\/\S+$/i.test(typed)) {
+  if (!state.source && /^https?:\/\/\S+$/i.test(typed)) {
     el.go.disabled = true;
     try {
-      const result = await takeUrl(typed);
-      if (result) {
-        await typeset({
-          text: result.text || '',
-          meta: result.meta,
-          pdfToken: result.pdfToken,
-        });
-      }
+      if (!(await takeUrl(typed))) return;
     } finally {
       el.go.disabled = false;
     }
-    return;
+    return; // the estimate is now on screen; the next click starts it
   }
 
-  if (typed.length < 2) {
+  if (!state.source && typed.length < 2) {
     say('Put something in first — paste some text, or choose a file.', true);
     el.source.focus();
     return;
   }
-  await typeset({ text: typed, meta: {} });
+
+  // Something that will take twenty minutes and real money gets asked about.
+  if (state.heavy && !state.armed) {
+    state.armed = true;
+    el.go.textContent = 'Yes — start it';
+    say('It will keep going if you close this page. Come back and it will be here.');
+    return;
+  }
+
+  if (!state.source && typed) {
+    state.fromLang = el.fromLang.value || state.fromLang;
+  }
+  await start();
 });
 
 el.file.addEventListener('change', (event) => takeFile(event.target.files?.[0]));
-el.fileClear.addEventListener('click', clearFile);
+el.fileClear.addEventListener('click', clearSource);
+/** The server's own chunk sizes, so pasted text can be sized up before it goes. */
+const CHUNK_CHARS = { typeset: 24_000, translate: 30_000, bilingual: 18_000 };
+
+let typingTimer = 0;
+el.source.addEventListener('input', () => {
+  if (el.source.disabled) return;
+  clearTimeout(typingTimer);
+  typingTimer = setTimeout(() => {
+    const text = el.source.value.trim();
+    if (text.length < 400 || /^https?:\/\/\S+$/i.test(text)) {
+      state.source = null;
+      el.estimate.hidden = true;
+      disarm();
+      return;
+    }
+    const words = (text.match(/[\p{L}\p{N}]+/gu) || []).length;
+    state.source = {
+      words,
+      pages: 0,
+      pieces: Object.fromEntries(
+        Object.entries(CHUNK_CHARS).map(([mode, size]) => [
+          mode,
+          Math.max(1, Math.ceil(text.length / size)),
+        ]),
+      ),
+      sourceToken: '',
+      meta: {},
+      lang: '',
+    };
+    drawEstimate();
+  }, 350);
+});
 
 let dragDepth = 0;
 window.addEventListener('dragenter', (event) => {
@@ -605,6 +740,61 @@ window.addEventListener('drop', (event) => {
   if (el.body.dataset.screen !== 'desk') return;
   const file = event.dataTransfer?.files?.[0];
   if (file) takeFile(file);
+});
+
+// --------------------------------------------------------------------- modes
+
+el.modes.addEventListener('click', (event) => {
+  const chip = event.target.closest('button');
+  if (!chip || chip.disabled) return;
+  state.mode = chip.dataset.mode;
+  for (const other of el.modes.querySelectorAll('button')) {
+    other.setAttribute('aria-checked', String(other === chip));
+  }
+  el.direction.hidden = state.mode === 'typeset';
+  drawEstimate();
+  disarm();
+});
+
+el.swap.addEventListener('click', () => {
+  const from = el.fromLang.value;
+  el.fromLang.value = settings.targetLang;
+  state.fromLang = settings.targetLang;
+  settings.targetLang = from;
+  el.intoLang.value = from;
+  el.setLang.value = from;
+  card.cache.clear();
+  applySettings();
+  drawEstimate();
+});
+
+el.fromLang.addEventListener('change', () => {
+  state.fromLang = el.fromLang.value;
+  disarm();
+});
+el.intoLang.addEventListener('change', () => {
+  settings.targetLang = el.intoLang.value;
+  el.setLang.value = settings.targetLang;
+  card.cache.clear();
+  applySettings();
+  disarm();
+});
+
+// ------------------------------------------------------------- work in flight
+
+el.runningOpen.addEventListener('click', () => {
+  if (!state.runningId) return;
+  reader.reset();
+  el.endNote.textContent = '';
+  el.articleEnd.hidden = true;
+  showReading();
+  follow(state.runningId);
+});
+
+el.runningStop.addEventListener('click', async () => {
+  if (!state.runningId) return;
+  await fetch(`/api/job/${state.runningId}/cancel`, { method: 'POST' });
+  drawShelf();
 });
 
 // -------------------------------------------------------------------- panels
@@ -687,6 +877,11 @@ el.toc.addEventListener('click', (event) => {
   }
 });
 
+el.facingToggle.addEventListener('click', () => {
+  settings.showSource = !settings.showSource;
+  applySettings();
+});
+
 for (const trigger of [$('wordsToggle'), $('deskWords')]) {
   trigger.addEventListener('click', () => {
     drawWords();
@@ -697,17 +892,21 @@ for (const trigger of [$('settingsToggle'), $('deskSettings')]) {
   trigger.addEventListener('click', () => openPanel(el.settingsPanel));
 }
 
-for (const [code, name] of LANGUAGES) {
-  const option = document.createElement('option');
-  option.value = code;
-  option.textContent = name;
-  el.setLang.append(option);
+for (const select of [el.setLang, el.fromLang, el.intoLang]) {
+  for (const [code, name] of LANGUAGES) {
+    const option = document.createElement('option');
+    option.value = code;
+    option.textContent = name;
+    select.append(option);
+  }
 }
 
 el.setLang.addEventListener('change', () => {
   settings.targetLang = el.setLang.value;
+  el.intoLang.value = settings.targetLang;
   card.cache.clear();
   applySettings();
+  disarm();
 });
 el.setTheme.addEventListener('click', (event) => {
   const chip = event.target.closest('button');
@@ -757,7 +956,7 @@ document.addEventListener('selectionchange', () => {
     Math.min(rect.left + rect.width / 2 - 45, window.innerWidth - 100),
   )}px`;
   el.selectionCue.style.top = `${Math.max(8, rect.top - 42)}px`;
-  selectionAnchor = { text, rect };
+  selectionAnchor = { text };
 });
 
 el.selectionLook.addEventListener('mousedown', (event) => event.preventDefault());
@@ -769,40 +968,49 @@ el.selectionLook.addEventListener('click', () => {
     (anchorNode?.nodeType === 1 ? anchorNode : anchorNode?.parentElement)?.closest('w-') ||
     el.article;
   hideCue();
-  card.open(holder, {
-    word: phrase,
-    sentence: '',
-    title: state.title,
-    sourceLang: state.sourceLang,
-    targetLang: settings.targetLang,
-  });
+  reader.onWord(holder, phrase);
 });
 
 // ----------------------------------------------------------------------- boot
 
 async function boot() {
   applySettings();
-  drawShelf();
   drawWords();
-
-  if (!canSpeak()) {
-    el.settingsNote.textContent = 'This browser cannot read words aloud.';
-  }
+  disarm();
 
   try {
-    const state_ = await (await fetch('/api/state')).json();
-    if (state_.targetLang && !localStorage.getItem(SETTINGS_KEY)) {
-      settings.targetLang = state_.targetLang;
+    const server = await (await fetch('/api/state')).json();
+    state.local = server.local;
+    state.fast = server.fast;
+    if (server.targetLang && !localStorage.getItem(SETTINGS_KEY)) {
+      settings.targetLang = server.targetLang;
       applySettings();
     }
-    el.engine.textContent = state_.local
-      ? 'Plain typesetting, borrowed dictionaries — add a key in .env for the real thing.'
-      : `Setting type with ${state_.model}${state_.fast ? ', fast' : ''}.`;
+    el.intoLang.value = settings.targetLang;
+    el.fromLang.value = state.fromLang;
+
+    if (server.local) {
+      for (const chip of el.modes.querySelectorAll('[data-mode]:not([data-mode="typeset"])')) {
+        chip.disabled = true;
+        chip.title = 'Translating needs an API key in .env';
+      }
+      el.engine.textContent =
+        'Plain typesetting only — add a key in .env to translate and to look words up.';
+    } else {
+      el.engine.textContent = `${server.model}${server.fast ? ', fast' : ''}.`;
+    }
   } catch {
     el.engine.textContent = 'The server is not answering.';
   }
 
+  await drawShelf();
+  if (!canSpeak()) el.settingsNote.textContent = 'This browser cannot read words aloud.';
   el.source.focus();
+
+  // Keep the desk honest about work still going on behind it.
+  setInterval(() => {
+    if (el.body.dataset.screen === 'desk' && state.runningId) drawShelf();
+  }, 4000);
 }
 
 boot();
