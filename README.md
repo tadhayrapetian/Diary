@@ -1,147 +1,135 @@
-# T. M. Riddle
+# Полка
 
-A diary that writes back.
-
-Write on the page with an Apple Pencil. The ink sinks into the paper, and after a
-moment an answer surfaces in a neat, slanted hand, drawn out one stroke at a time.
-You can write about anything — homework, a bug you cannot find, a bad week, what
-to call the cat — and it will answer.
-
-There is no send button, no chat bubble, no spinner, no typing dots, and no
-"thinking…". The only thing that ever happens on the page is ink.
-
----
-
-## Getting it running
+Своя библиотека и читалка к ней. Кладёте книги и документы — читаете так же, как
+в Books, только это ваша программа: файлы лежат у вас, ничего никуда не уходит,
+и всё можно переделать под себя.
 
 ```bash
 npm install
-cp .env.example .env      # then put your key in it
 npm start
 ```
 
-Open the address it prints. That is all it needs.
+Откройте адрес, который она напечатает. Больше ничего не нужно: ни ключей, ни
+регистрации, ни интернета.
 
-The key goes in `.env`:
+## На планшет
+
+Читать хочется не за столом, поэтому программа сразу считает, что её откроют с
+другого устройства.
+
+1. `npm start` на компьютере — она печатает и локальный адрес, и адрес в вашей сети.
+2. На планшете откройте `http://<адрес-компьютера>:4244` в Safari.
+3. **Поделиться → На экран «Домой»**. С домашнего экрана открывается во весь
+   экран, без браузерных полос — и выглядит как обычное приложение.
+
+Оба устройства должны быть в одной сети. Если планшет не достучался — дело
+почти всегда в брандмауэре компьютера, а не в программе.
+
+## Что читает
+
+| | |
+|---|---|
+| **EPUB** | 2 и 3, с оглавлением, обложкой, картинками и сносками |
+| **FB2** | и `.fb2.zip`, со стихами, эпиграфами и примечаниями |
+| **PDF** | страницами, через pdf.js; первая страница становится обложкой |
+| **DOCX** | заголовки, списки, таблицы, картинки; заголовки делят на главы |
+| **TXT** | в том числе в windows-1251 — кодировка определяется сама |
+| **Markdown**, **HTML** | заметки и выгрузки из других программ |
+
+Формат определяется по содержимому файла, а не по расширению: книга, скачанная
+как `book.bin`, всё равно откроется книгой.
+
+## Как читать
+
+- **Касание справа или слева** — страница вперёд и назад. **По середине** —
+  показать и спрятать полосы управления. Свайп тоже листает.
+- **С клавиатуры**: `←` `→` `пробел`, `t` — оглавление, `b` — закладка,
+  `f` — поиск, `Esc` — назад.
+- **Аа** открывает вид: четыре темы (бумага, сепия, серый, ночь), кегль, шрифт,
+  интерлиньяж, поля, выключка и режим прокрутки вместо страниц.
+- **Оглавление и закладки** — в одной панели. Закладка ставится на текущей
+  странице и запоминает первую строку с неё.
+- **Поиск по книге** ищет по всем главам сразу и подсвечивает найденное на странице.
+- **Сноски** открываются на месте, маленьким окошком, без ухода со страницы.
+- Место, на котором вы остановились, запоминается на каждой книге — и на
+  сервере, и в браузере, так что читать можно с двух устройств по очереди.
+
+На широком экране страница сама превращается в разворот из двух колонок.
+
+Издательские стили книга к книге разные и часто плохие, поэтому они
+отбрасываются: остаётся структура (заголовки, курсив, стихи, таблицы,
+картинки), а типографика — ваша. Книга 1998 года выглядит так же, как книга
+прошлого месяца.
+
+## Где лежат книги
+
+В `library/` рядом с программой:
+
+```
+library/
+  files/    сами файлы, как вы их принесли
+  covers/   вынутые обложки
+  books/    оглавления
+  index.json полка: что где стоит и на чём вы остановились
+```
+
+Никакой базы данных — обычные файлы. Библиотеку можно скопировать на другую
+машину через `cp -r`, и она останется библиотекой. `LIBRARY_DIR` в `.env`
+переносит её куда угодно, хоть на внешний диск.
+
+## Справка на полях (по желанию)
+
+Если в `.env` положить ключ:
 
 ```
 ANTHROPIC_API_KEY=sk-ant-...
 ```
 
-**Without a key it still runs.** The diary answers from a small canned repertoire
-so you can see the whole thing work end to end before wiring a model in. It says
-so when it starts.
+в меню выделенного текста появляются **Значение**, **Перевод** и **Объяснить** —
+короткий комментарий на полях: что значит устаревшее слово, что написано в
+латинском эпиграфе, что вообще здесь происходит. Без ключа программа работает
+ровно так же, просто не предлагает этого.
 
-### Putting it on the iPad
-
-The Pencil is the point, so run it on your machine and open it on the tablet:
-
-1. `npm start` (it listens on `0.0.0.0` by default).
-2. On the iPad, open `http://<your-computer's-LAN-IP>:4243` in Safari.
-3. **Share → Add to Home Screen.** Launched from the Home Screen it opens
-   fullscreen with no browser chrome, which is most of the illusion.
-
-Both devices need to be on the same network. If the iPad cannot reach it, check
-your machine's firewall rather than the app.
-
----
-
-## How to use it
-
-- **Write anywhere on the page.** Pressure and speed shape the line.
-- **Stop writing.** After a pause the ink is drunk into the paper and the answer
-  begins. The pause is what tells the diary you have finished — there is nothing
-  to press.
-- **Two fingers on the page** sends it immediately, whenever you like.
-- **Tap while it is writing** and the hand hurries.
-- **Press and hold the bottom-left corner** for the only settings there are:
-  writing speed, how long a pause it waits for, whether it accepts a finger as
-  well as a pencil, a plain-text transcript of everything said, and a new diary.
-
-It remembers the conversation across reloads, and the page turns itself when it
-runs out of room.
-
----
-
-## How it works
-
-```
-Apple Pencil ──► ink on canvas ──► lifted as an image ──► Claude reads the
-                                                          handwriting and answers
-                        ▲                                          │
-                        └────────── written back, stroke by stroke ┘
-```
-
-There is no separate handwriting-recognition step. The page is sent to Claude as
-an image, and the model reads the handwriting and replies in the same call. It
-returns the words it read in `⟦ ⟧` first, then its answer; the transcript becomes
-the conversation history (so past turns cost text, not images) and can be read
-back from the settings panel.
-
-**The absorption animation is the loading state.** The request goes out the
-instant the ink lifts, so the second or so of ink sinking into the paper is spent
-on the round trip rather than after it. The reply is streamed and the hand starts
-writing on the first tokens. If the network is slower than the hand, the hand
-simply stops mid-sentence — which is what a person writing would do, and is why
-this app never needs a spinner. If the reply is slow, the page just stays blank,
-which is exactly what the diary in the film does.
-
-### Files
+## Как устроено
 
 | | |
 |---|---|
-| `public/quill.js` | Pencil capture, pressure-varied ink, and the absorption |
-| `public/scribe.js` | The diary's hand: layout, per-character timing, wet-ink edge |
-| `public/app.js` | Page flow, page turns, the exchange, settings |
-| `server/server.js` | Static files and the streaming reply endpoint |
-| `server/ink.js` | Splits `⟦transcript⟧` off the stream and strips anything unwritable |
-| `prompts/riddle.md` | The persona. Edit this to change who is on the other side. |
+| `server/zip.js` | чтение zip: EPUB, DOCX и `.fb2.zip` — это zip |
+| `server/xml.js` | терпимый разбор XML: настоящие файлы всегда немного сломаны |
+| `server/html.js` | глава из книги превращается в безопасный HTML |
+| `server/epub.js`, `fb2.js`, `docx.js`, `text.js`, `pdf.js` | форматы |
+| `server/encoding.js` | определение кодировки, в том числе windows-1251 |
+| `server/library.js` | полка на диске: что кладём, что достаём |
+| `server/server.js` | статика и API |
+| `public/reader.js` | сама читалка: колонки, листание, положение, закладки |
+| `public/pdf-view.js` | PDF |
+| `public/shelf.js`, `app.js` | полка и связи между всем |
 
-### The model call
+Главы отдаются по одной и разбираются на лету, поэтому книга на сорок мегабайт
+открывается так же быстро, как на четыреста килобайт.
 
-`claude-opus-5`, streamed, with thinking disabled at low effort — the shortest
-path to a first token, which is what matters when a hand is waiting to move. The
-persona is cached. Refusal fallbacks are on. If your account does not have the
-beta features, the server quietly retries on the plain endpoint.
+pdf.js не лежит в репозитории — он ставится через `npm install` и раздаётся
+прямо из `node_modules`. Если его нет, PDF откроется во встроенном просмотрщике
+браузера.
 
-Two knobs in `.env` are worth knowing about:
-
-- `DIARY_FAST=1` — the same Opus 5 model at up to ~2.5× the output rate, at
-  premium pricing. The page starts filling sooner. Worth trying.
-- `DIARY_MODEL=` — anything else you would rather it used.
-
-### Changing the handwriting
-
-On an iPad the script is **Snell Roundhand**, which ships with iOS. Elsewhere it
-falls back to **Petit Formal Script**, bundled in `public/fonts/` (SIL Open Font
-License). Both are declared in `FONT_STACK` in `public/scribe.js`; the size is
-measured from whichever face actually resolves, so a different script face can be
-dropped in without re-tuning the layout.
-
----
-
-## Tests
+## Тесты
 
 ```bash
 npm test
 ```
 
-Covers the stream parsing — the transcript delimiters landing on chunk
-boundaries, leaked thinking blocks, markdown, tags split across chunks, and
-streams that end mid-thought. That layer sits between a model's tokens and a
-quill that cannot un-write a mistake, so it is the part worth being sure about.
+Проверяются разбор форматов (на настоящих EPUB, FB2, DOCX и PDF, которые
+собираются тут же), определение кодировок, полка на диске и живой сервер —
+загрузка, оглавление, поиск, сохранение места, попытки выйти за пределы папки.
 
-The drawing, absorption, wrapping, page turns and failure paths were checked in a
-real browser. **The live model call has not been exercised** — this was built
-without API credentials to hand, so the request shape was verified against a
-local stand-in rather than the real endpoint. It is the one thing to watch on
-first run.
+Интерфейс проверялся в браузере: полка, листание, оглавление, поиск, закладки,
+темы, режим прокрутки, PDF, раскладки для планшета и телефона.
 
----
+## Чего пока нет
 
-## A note on the voice
-
-It is written to be charming and to be genuinely useful — a diary that only
-purrs is a toy. It grows more familiar the longer you write to it, which is the
-point of the character. It will not give you genuinely dangerous instructions; it
-declines the way a clever, well-bred boy declines, and moves on.
+- В PDF нет поиска и выделения текста — он показывается как страницы.
+- EPUB с фиксированной вёрсткой (комиксы, детские книги) откроется, но как
+  обычный текст.
+- Книги с DRM не открываются — и не будут.
+- Цитаты и заметки к выделенному тексту сохраняются как закладка с цитатой;
+  отдельного маркера в тексте пока нет.

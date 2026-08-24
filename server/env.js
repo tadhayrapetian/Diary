@@ -6,8 +6,8 @@ const here = dirname(fileURLToPath(import.meta.url));
 export const root = join(here, '..');
 
 /**
- * Minimal .env reader. Values already present in the real environment win, so
- * `ANTHROPIC_API_KEY=… npm start` overrides the file without editing it.
+ * Минимальное чтение .env. Значения из настоящего окружения главнее, поэтому
+ * `ANTHROPIC_API_KEY=… npm start` перебивает файл, не трогая его.
  */
 export function loadEnv(file = join(root, '.env')) {
   let raw;

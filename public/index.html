@@ -1,96 +1,154 @@
 <!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"
-    />
-    <title>T. M. Riddle</title>
-    <meta name="description" content="A diary that writes back." />
-    <meta name="theme-color" content="#e4d6b8" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta
-      name="apple-mobile-web-app-status-bar-style"
-      content="black-translucent"
-    />
-    <meta name="apple-mobile-web-app-title" content="T. M. Riddle" />
-    <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
-    <link rel="apple-touch-icon" href="./icon.svg" />
-    <link rel="stylesheet" href="./styles.css" />
-  </head>
-  <body>
-    <main id="surface" aria-label="The open diary">
-      <canvas id="page"></canvas>
-      <canvas id="flux"></canvas>
-      <div id="turner" aria-hidden="true"></div>
-      <button
-        id="corner"
-        type="button"
-        aria-label="Diary settings"
-        title="Press and hold"
-      ></button>
-    </main>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Полка</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#f6f3ec" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14161a" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Полка">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icon.png">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body data-theme="paper">
 
-    <div id="panel" class="veil" hidden>
-      <div class="card" role="dialog" aria-modal="true" aria-label="Settings">
-        <h1>The Diary</h1>
+<!-- ------------------------------------------------------------------ полка -->
+<section id="library" class="view">
+  <header class="library-bar">
+    <h1>Полка</h1>
+    <div class="library-tools">
+      <label class="field">
+        <input id="library-search" type="search" placeholder="Найти книгу" autocomplete="off" spellcheck="false">
+      </label>
+      <button id="sort-button" class="chip" type="button">Недавние</button>
+      <button id="import-button" class="chip primary" type="button">Добавить</button>
+    </div>
+  </header>
 
-        <label class="row">
-          <span>The hand writes</span>
-          <select id="opt-speed">
-            <option value="86">slowly</option>
-            <option value="52" selected>naturally</option>
-            <option value="32">briskly</option>
-          </select>
-        </label>
+  <div id="shelf" class="shelf"></div>
 
-        <label class="row">
-          <span>It answers after</span>
-          <select id="opt-idle">
-            <option value="1200">a moment</option>
-            <option value="1800" selected>a pause</option>
-            <option value="2800">a long pause</option>
-            <option value="0">never — I will tap with two fingers</option>
-          </select>
-        </label>
+  <div id="library-empty" class="empty" hidden>
+    <div class="empty-art" aria-hidden="true">
+      <span></span><span></span><span></span>
+    </div>
+    <h2>Здесь пока пусто</h2>
+    <p>Перетащите сюда книги или документы — или нажмите «Добавить».</p>
+    <p class="formats">EPUB · FB2 · PDF · DOCX · TXT · Markdown · HTML</p>
+  </div>
 
-        <p class="note tight">
-          Two fingers on the page always sends it, whatever is chosen above. A
-          tap while it is writing makes the hand hurry.
-        </p>
+  <input id="file-input" type="file" multiple accept=".epub,.fb2,.zip,.pdf,.docx,.txt,.md,.markdown,.html,.htm" hidden>
+  <div id="drop-veil" class="drop-veil" hidden><span>Отпустите — поставлю на полку</span></div>
+</section>
 
-        <label class="row">
-          <span>Accept my finger, not only a pencil</span>
-          <input id="opt-touch" type="checkbox" checked />
-        </label>
+<!-- --------------------------------------------------------------- читалка -->
+<section id="reader" class="view" hidden>
+  <div id="reader-top" class="chrome chrome-top">
+    <button id="back-button" class="icon-button" type="button" title="К полке" aria-label="К полке">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+    </button>
+    <div class="chrome-title"><span id="reader-title"></span></div>
+    <div class="chrome-actions">
+      <button id="toc-button" class="icon-button" type="button" title="Оглавление" aria-label="Оглавление">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+      </button>
+      <button id="find-button" class="icon-button" type="button" title="Поиск в книге" aria-label="Поиск в книге">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.3-4.3"/></svg>
+      </button>
+      <button id="bookmark-button" class="icon-button" type="button" title="Закладка" aria-label="Закладка">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v16l-5-4-5 4z"/></svg>
+      </button>
+      <button id="type-button" class="icon-button wide" type="button" title="Вид" aria-label="Вид"><span>Аа</span></button>
+    </div>
+  </div>
 
-        <div class="actions">
-          <button id="act-ledger" type="button">Read it back</button>
-          <button id="act-new" type="button" class="quiet">
-            Begin a new diary
-          </button>
-        </div>
+  <div id="stage" class="stage">
+    <div id="page-frame" class="page-frame">
+      <div id="flow" class="flow"></div>
+    </div>
+    <div id="pdf-stage" class="pdf-stage" hidden></div>
+    <div id="reader-spinner" class="spinner" hidden></div>
+  </div>
 
-        <p id="state-note" class="note"></p>
-        <button id="act-close" type="button" class="close" aria-label="Close">
-          Close
-        </button>
-      </div>
+  <div id="reader-bottom" class="chrome chrome-bottom">
+    <span id="chapter-label"></span>
+    <span id="page-label"></span>
+  </div>
+</section>
+
+<!-- ------------------------------------------------------------- панели ----->
+<div id="scrim" class="scrim" hidden></div>
+
+<aside id="sheet-toc" class="sheet" hidden>
+  <header><h2>Оглавление</h2><button class="sheet-close icon-button" type="button" aria-label="Закрыть">✕</button></header>
+  <nav class="sheet-tabs">
+    <button class="tab is-on" data-tab="toc" type="button">Главы</button>
+    <button class="tab" data-tab="bookmarks" type="button">Закладки</button>
+  </nav>
+  <div class="sheet-body">
+    <ol id="toc-list" class="toc-list"></ol>
+    <ul id="bookmark-list" class="bookmark-list" hidden></ul>
+  </div>
+</aside>
+
+<aside id="sheet-find" class="sheet" hidden>
+  <header><h2>Поиск в книге</h2><button class="sheet-close icon-button" type="button" aria-label="Закрыть">✕</button></header>
+  <div class="sheet-search">
+    <input id="find-input" type="search" placeholder="Слово или фраза" autocomplete="off" spellcheck="false">
+  </div>
+  <div class="sheet-body"><ul id="find-results" class="find-list"></ul></div>
+</aside>
+
+<aside id="sheet-type" class="sheet sheet-type" hidden>
+  <header><h2>Вид</h2><button class="sheet-close icon-button" type="button" aria-label="Закрыть">✕</button></header>
+  <div class="sheet-body">
+    <div class="themes" id="theme-picker">
+      <button class="theme-dot" data-theme="paper" type="button" title="Бумага"><span>Аа</span></button>
+      <button class="theme-dot" data-theme="sepia" type="button" title="Сепия"><span>Аа</span></button>
+      <button class="theme-dot" data-theme="grey" type="button" title="Серый"><span>Аа</span></button>
+      <button class="theme-dot" data-theme="night" type="button" title="Ночь"><span>Аа</span></button>
     </div>
 
-    <div id="ledger" class="veil" hidden>
-      <div class="card wide" role="dialog" aria-modal="true" aria-label="What was written">
-        <h1>What was written</h1>
-        <div id="ledger-body" class="scroll"></div>
-        <button id="ledger-close" type="button" class="close" aria-label="Close">
-          Close
-        </button>
-      </div>
+    <div class="row">
+      <button id="font-smaller" class="step" type="button" aria-label="Мельче">А</button>
+      <input id="font-size" type="range" min="82" max="180" step="2">
+      <button id="font-bigger" class="step big" type="button" aria-label="Крупнее">А</button>
     </div>
 
-    <script type="module" src="./app.js"></script>
-  </body>
+    <label class="row labelled"><span>Шрифт</span>
+      <select id="font-family">
+        <option value="serif">С засечками</option>
+        <option value="sans">Без засечек</option>
+        <option value="mono">Моноширинный</option>
+      </select>
+    </label>
+
+    <label class="row labelled"><span>Интерлиньяж</span>
+      <input id="line-height" type="range" min="130" max="210" step="5">
+    </label>
+
+    <label class="row labelled"><span>Поля</span>
+      <input id="margins" type="range" min="4" max="16" step="1">
+    </label>
+
+    <label class="row switch"><span>Выключка по ширине</span>
+      <input id="justify" type="checkbox">
+    </label>
+
+    <label class="row switch"><span>Прокрутка вместо страниц</span>
+      <input id="scroll-mode" type="checkbox">
+    </label>
+  </div>
+</aside>
+
+<div id="selection-menu" class="popover" hidden></div>
+<div id="note-popover" class="popover note-popover" hidden></div>
+<div id="toast" class="toast" hidden></div>
+
+<script type="module" src="/app.js"></script>
+</body>
 </html>
