@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Отпечаток — студия фотопечати</title>
+    <meta
+      name="description"
+      content="Раскладка и печать фотографий: полароид, инстакс, 10×15, документы, свои размеры. Всё считается в миллиметрах и не уходит из браузера."
+    />
+    <meta name="theme-color" content="#14151b" />
+    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./css/studio.css" />
+  </head>
+  <body class="theme-dark">
+    <header class="bar">
+      <div class="brand">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="3" y="3" width="18" height="18" rx="2.5" />
+          <rect class="win" x="6" y="6" width="12" height="9" rx="1" />
+        </svg>
+        <span class="brand-name">Отпечаток</span>
+        <input
+          id="doc-title"
+          class="doc-title"
+          value="Без названия"
+          aria-label="Название проекта"
+          spellcheck="false"
+        />
+      </div>
+
+      <div class="bar-group">
+        <button id="btn-add" class="btn primary" title="Добавить фотографии (A)">
+          <span class="plus">+</span> Фото
+        </button>
+        <div class="menu-wrap">
+          <button id="btn-project" class="btn ghost" aria-haspopup="true">Проект</button>
+          <div class="menu" id="menu-project" hidden>
+            <button data-act="save-full">Сохранить проект с фото</button>
+            <button data-act="save-light">Сохранить только настройки</button>
+            <button data-act="open">Открыть проект…</button>
+            <hr />
+            <button data-act="theme">Светлая / тёмная тема</button>
+            <button data-act="keys">Клавиши…</button>
+            <hr />
+            <button data-act="clear">Очистить всё</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="seg" id="mode-switch" role="tablist">
+        <button data-mode="layout" class="on" role="tab">Лист</button>
+        <button data-mode="editor" role="tab">Кадр</button>
+      </div>
+
+      <div class="bar-group right">
+        <button id="btn-undo" class="btn icon" title="Отменить (Ctrl+Z)" aria-label="Отменить">↶</button>
+        <button id="btn-redo" class="btn icon" title="Вернуть (Ctrl+Shift+Z)" aria-label="Вернуть">↷</button>
+        <div class="menu-wrap">
+          <button id="btn-export" class="btn ghost" aria-haspopup="true">Экспорт</button>
+          <div class="menu right" id="menu-export" hidden>
+            <button data-act="pdf">PDF — листами</button>
+            <button data-act="images">Картинки — по листу</button>
+            <button data-act="cards">Картинки — по кадру</button>
+            <hr />
+            <button data-act="calib">Калибровка принтера…</button>
+          </div>
+        </div>
+        <button id="btn-print" class="btn primary" title="Печать (Ctrl+P)">Печать</button>
+      </div>
+    </header>
+
+    <main class="shell">
+      <aside class="panel library" id="library">
+        <div class="panel-head">
+          <h2>Библиотека</h2>
+          <span class="count" id="library-count">0</span>
+          <button id="btn-lib-all" class="mini" title="Выделить всё (Ctrl+A)">всё</button>
+        </div>
+        <div class="tray" id="tray" tabindex="0"></div>
+        <div class="tray-empty" id="tray-empty">
+          <p>Перетащите фотографии сюда</p>
+          <p class="dim">или нажмите «+ Фото». Ничего никуда не отправляется.</p>
+        </div>
+        <div class="panel-foot">
+          <button class="mini" id="btn-dup" title="Дубликат (D)">дубль</button>
+          <button class="mini" id="btn-del" title="Удалить (Del)">удалить</button>
+          <button class="mini" id="btn-sort">по дате</button>
+        </div>
+      </aside>
+
+      <section class="stage" id="stage">
+        <div class="stage-scroll" id="stage-scroll">
+          <div class="sheets" id="sheets"></div>
+          <div class="editor" id="editor" hidden></div>
+          <div class="stage-empty" id="stage-empty">
+            <svg viewBox="0 0 64 64" aria-hidden="true">
+              <rect x="8" y="6" width="48" height="52" rx="3" />
+              <rect class="win" x="13" y="11" width="38" height="30" rx="1.5" />
+            </svg>
+            <h3>Пусто, но ненадолго</h3>
+            <p>
+              Перетащите сюда фотографии — или нажмите <b>+ Фото</b>. Выберите формат
+              справа: полароид, инстакс, 10 × 15, документы, свой размер в миллиметрах.
+            </p>
+          </div>
+        </div>
+        <div class="stage-bar">
+          <div class="zoom">
+            <button id="zoom-out" class="mini" aria-label="Мельче">−</button>
+            <input id="zoom-range" type="range" min="15" max="220" step="1" value="62" aria-label="Масштаб" />
+            <button id="zoom-in" class="mini" aria-label="Крупнее">+</button>
+            <button id="zoom-fit" class="mini">по окну</button>
+            <span id="zoom-label" class="dim">62%</span>
+          </div>
+          <div class="stage-info" id="stage-info"></div>
+        </div>
+      </section>
+
+      <aside class="panel inspector" id="inspector">
+        <nav class="tabs" id="tabs"></nav>
+        <div class="panels" id="panels"></div>
+        <div class="apply-all">
+          <label>
+            <input type="checkbox" id="apply-all" />
+            <span>Менять сразу у всех кадров</span>
+          </label>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="status" id="status">
+      <span id="status-main">Готово</span>
+      <span class="spacer"></span>
+      <span id="status-warn" class="warn"></span>
+      <span id="status-dpi"></span>
+    </footer>
+
+    <div class="overlay" id="overlay" hidden>
+      <div class="overlay-card">
+        <h3 id="overlay-title">Работаю…</h3>
+        <div class="progress"><div id="overlay-bar"></div></div>
+        <p id="overlay-note" class="dim"></p>
+      </div>
+    </div>
+
+    <div class="modal" id="modal" hidden>
+      <div class="modal-card" role="dialog" aria-modal="true">
+        <h3 id="modal-title"></h3>
+        <div id="modal-body"></div>
+        <div class="modal-foot">
+          <button class="btn ghost" id="modal-cancel">Отмена</button>
+          <button class="btn primary" id="modal-ok">Хорошо</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast-host"></div>
+    <div class="drop-veil" id="drop-veil" hidden><span>Отпустите — возьму в работу</span></div>
+
+    <input type="file" id="file-input" multiple accept="image/*" hidden />
+    <input type="file" id="project-input" accept=".json,application/json" hidden />
+
+    <div id="print-area" aria-hidden="true"></div>
+    <style id="print-page-style"></style>
+
+    <script src="./js/core/units.js"></script>
+    <script src="./js/core/formats.js"></script>
+    <script src="./js/core/store.js"></script>
+    <script src="./js/core/imaging.js"></script>
+    <script src="./js/core/adjust.js"></script>
+    <script src="./js/core/render.js"></script>
+    <script src="./js/core/layout.js"></script>
+    <script src="./js/core/sheet.js"></script>
+    <script src="./js/core/pdf.js"></script>
+    <script src="./js/core/export.js"></script>
+    <script src="./js/ui/chrome.js"></script>
+    <script src="./js/ui/fields.js"></script>
+    <script src="./js/ui/inspector.js"></script>
+    <script src="./js/ui/library.js"></script>
+    <script src="./js/ui/stage.js"></script>
+    <script src="./js/ui/shortcuts.js"></script>
+    <script src="./js/app.js"></script>
+  </body>
+</html>

@@ -126,7 +126,9 @@ dropped in without re-tuning the layout.
 npm test
 ```
 
-Covers the stream parsing — the transcript delimiters landing on chunk
+Covers the diary's stream parsing, and the print studio's arithmetic (see below).
+
+The diary's own tests cover the stream parsing — the transcript delimiters landing on chunk
 boundaries, leaked thinking blocks, markdown, tags split across chunks, and
 streams that end mid-thought. That layer sits between a model's tokens and a
 quill that cannot un-write a mistake, so it is the part worth being sure about.
@@ -136,6 +138,24 @@ real browser. **The live model call has not been exercised** — this was built
 without API credentials to hand, so the request shape was verified against a
 local stand-in rather than the real endpoint. It is the one thing to watch on
 first run.
+
+---
+
+## Also in here: Отпечаток, a photo print studio
+
+`print/` is a separate program that shares nothing with the diary but the
+repository and its handwriting font — a studio for laying photographs out on a
+sheet and printing them: Polaroid and Instax at their real film sizes, ordinary
+10 × 15, passport photos, or any size you type in millimetres.
+
+```bash
+npm run print     # then open the address it prints
+```
+
+It also works by opening `print/index.html` directly — it is plain files, with no
+server, no network and no account. Photographs never leave the machine.
+
+Its own README, in Russian, is at [`print/README.md`](print/README.md).
 
 ---
 
