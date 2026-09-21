@@ -10,7 +10,8 @@
   "scripts": {
     "start": "node server/server.js",
     "dev": "node --watch server/server.js",
-    "test": "node --test server/ink.test.js"
+    "print": "node print/serve.js",
+    "test": "node --test server/ink.test.js print/test/print.test.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.117.1"
