@@ -145,3 +145,11 @@ It is written to be charming and to be genuinely useful — a diary that only
 purrs is a toy. It grows more familiar the longer you write to it, which is the
 point of the character. It will not give you genuinely dangerous instructions; it
 declines the way a clever, well-bred boy declines, and moves on.
+
+---
+
+## Also in this repository
+
+[`mail/`](mail/README.md) — **Aether**, a personal mail client for any IMAP/SMTP
+account, with an optional Claude writing assistant. It is a separate app with its
+own `package.json`: `cd mail && npm install && npm start`.

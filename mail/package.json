@@ -1,0 +1,28 @@
+{
+  "name": "aether-mail",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Aether — a calm, fast, beautiful mail client for your own IMAP/SMTP account.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server/server.js",
+    "dev": "node --watch server/server.js",
+    "test": "node --test server/*.test.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.3.0",
+    "iconv-lite": "^0.7.3",
+    "imapflow": "^2.9.1",
+    "libbase64": "^1.4.1",
+    "libqp": "^3.0.1",
+    "mailparser": "^3.12.4",
+    "nodemailer": "^10.2.1"
+  },
+  "devDependencies": {
+    "hoodiecrow-imap": "^3.3.1",
+    "smtp-server": "^3.21.1"
+  }
+}
