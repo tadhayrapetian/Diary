@@ -52,11 +52,12 @@ function baseCss(themed) {
   const dark = themed && document.documentElement.dataset.scheme === 'dark';
   const ink = dark ? '#e8e8ee' : '#1d1d1f';
   const muted = dark ? '#9898a6' : '#6e6e7a';
+  const classic = document.documentElement.dataset.skin !== 'aether';
   const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#6e5bff';
   return `
   :root{color-scheme:${dark ? 'dark' : 'light'}}
   html,body{margin:0;padding:0;background:transparent}
-  body{display:flow-root;font:15px/1.6 -apple-system,BlinkMacSystemFont,'SF Pro Text','Inter','Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:${ink};overflow-wrap:anywhere;-webkit-font-smoothing:antialiased}
+  body{display:flow-root;font:${classic ? "13px/1.4 Arial,'Liberation Sans',Helvetica,sans-serif" : "15px/1.6 -apple-system,BlinkMacSystemFont,'SF Pro Text','Inter','Segoe UI',Roboto,Helvetica,Arial,sans-serif"};color:${ink};overflow-wrap:anywhere;-webkit-font-smoothing:antialiased}
   ${themed ? `a{color:${accent}}` : ''}
   img{max-width:100%;height:auto}
   table{max-width:100%}
@@ -139,6 +140,13 @@ export function renderBody(m, { allowRemote = false } = {}) {
     const d = frame.contentDocument;
     if (!d) return;
     if (!plain) foldQuotes(d);
+    // Keys pressed while reading inside the letter still drive the mailbox.
+    d.addEventListener('keydown', (e) => {
+      if (e.target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+      const copy = new KeyboardEvent('keydown', { key: e.key, code: e.code, shiftKey: e.shiftKey, ctrlKey: e.ctrlKey, metaKey: e.metaKey, altKey: e.altKey, bubbles: true, cancelable: true });
+      document.body.dispatchEvent(copy);
+      if (copy.defaultPrevented) e.preventDefault();
+    });
     for (const a of d.querySelectorAll('a[href]')) {
       a.target = '_blank';
       a.rel = 'noopener noreferrer';

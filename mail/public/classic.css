@@ -1,0 +1,1615 @@
+/* ───────────────────────────────────────────────────────────────
+   Classic skins: Outlook 2003 (Luna blue) and Outlook 2007 (blue,
+   with the warm orange highlights of the Office 2007 era).
+   Everything here applies only under html[data-skin^='outlook'].
+   ─────────────────────────────────────────────────────────────── */
+
+.classic-only,
+.classic-bar,
+.classic-status {
+  display: none;
+}
+
+/* ───────────── palettes */
+
+[data-skin='outlook2003'] {
+  --o-font: Tahoma, 'Segoe UI', Verdana, 'DejaVu Sans', sans-serif;
+  --o-size: 11px;
+  --o-app: #6f9ddf;
+  --o-frame: #6593cf;
+  --o-bar: linear-gradient(180deg, #e3efff 0%, #cfe1fc 45%, #b5cff7 75%, #9ebfef 100%);
+  --o-menubar: linear-gradient(180deg, #c4daf9, #a7c6f2);
+  --o-title: linear-gradient(180deg, #7ea4ea 0%, #5180d6 55%, #3d6cc6 100%);
+  --o-title-ink: #fff;
+  --o-title-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+  --o-nav-bg: #e8f1ff;
+  --o-group-ink: #15428b;
+  --o-group-line: #a6c0e6;
+  --o-sel: #316ac5;
+  --o-sel-ink: #fff;
+  --o-sel-sub: #dfe9fb;
+  --o-hover: #ffeec2;
+  --o-hover-line: #000080;
+  --o-press: #fe914b;
+  --o-module: linear-gradient(180deg, #e3efff 0%, #c4daf9 50%, #a5c4f2 100%);
+  --o-module-on: linear-gradient(180deg, #fde5b0 0%, #fbd28a 45%, #f8b04c 100%);
+  --o-module-hover: linear-gradient(180deg, #fffbe6 0%, #ffedb8 50%, #fdd28d 100%);
+  --o-header: linear-gradient(180deg, #f3f8ff 0%, #dbe8fb 100%);
+  --o-status: linear-gradient(180deg, #a7c6f2, #87afe9);
+  --o-status-ink: #0b2e6b;
+  --o-window: linear-gradient(180deg, #0997ff 0%, #0053ee 8%, #0050ee 40%, #0066ff 88%, #0055dd 100%);
+  --o-window-ink: #fff;
+  --o-dialog: #ece9d8;
+  --o-menu-gutter: linear-gradient(90deg, #e3efff, #9ebfef);
+  --o-menu-line: #002d96;
+}
+
+[data-skin='outlook2007'] {
+  --o-font: 'Segoe UI', Tahoma, 'DejaVu Sans', sans-serif;
+  --o-size: 12px;
+  --o-app: #a5c7f1;
+  --o-frame: #8db2e3;
+  --o-bar: linear-gradient(180deg, #f0f6fe 0%, #e0ecfc 49%, #ccdff8 50%, #dbe9fb 100%);
+  --o-menubar: linear-gradient(180deg, #e3efff, #d0e3fc);
+  --o-title: linear-gradient(180deg, #e9f2fd 0%, #d6e6fb 50%, #c4daf9 51%, #d3e5fb 100%);
+  --o-title-ink: #15428b;
+  --o-title-shadow: none;
+  --o-nav-bg: #f2f7fe;
+  --o-group-ink: #15428b;
+  --o-group-line: #c5d9f3;
+  --o-sel: linear-gradient(180deg, #dcebfc 0%, #c1dbfc 100%);
+  --o-sel-ink: #000;
+  --o-sel-sub: #2b4a7a;
+  --o-hover: linear-gradient(180deg, #fffcdb 0%, #ffefb2 49%, #ffd96e 50%, #ffe69e 100%);
+  --o-hover-line: #dbce99;
+  --o-press: linear-gradient(180deg, #fdd59c 0%, #fbb556 49%, #fa9f2e 50%, #fdc56b 100%);
+  --o-module: linear-gradient(180deg, #e3efff 0%, #d4e5fb 49%, #c0d8f8 50%, #d3e5fb 100%);
+  --o-module-on: linear-gradient(180deg, #fde3b4 0%, #fdc77a 49%, #fbb13d 50%, #fdd88f 100%);
+  --o-module-hover: linear-gradient(180deg, #fffcdb 0%, #ffefb2 49%, #ffd96e 50%, #ffe69e 100%);
+  --o-header: linear-gradient(180deg, #f6faff 0%, #e2edfb 100%);
+  --o-status: linear-gradient(180deg, #e3efff 0%, #cfe1fa 50%, #bcd4f6 51%, #cfe1fb 100%);
+  --o-status-ink: #15428b;
+  --o-window: linear-gradient(180deg, #e4effd 0%, #d1e2f9 50%, #bfd6f6 51%, #d4e5fb 100%);
+  --o-window-ink: #15428b;
+  --o-dialog: #f0f4fa;
+  --o-menu-gutter: linear-gradient(90deg, #f1f1f1, #e9eef5);
+  --o-menu-line: #868686;
+}
+
+/* ───────────── frame */
+
+[data-skin^='outlook'] body {
+  font-family: var(--o-font);
+  font-size: var(--o-size);
+  color: #000;
+  background: var(--o-app);
+  -webkit-font-smoothing: auto;
+}
+[data-skin^='outlook'] body::before {
+  display: none;
+}
+[data-skin^='outlook'] .classic-only {
+  display: revert;
+}
+[data-skin^='outlook'] .ic {
+  stroke-width: 1.6;
+}
+[data-skin^='outlook'] kbd {
+  display: none;
+}
+[data-skin^='outlook'] :focus-visible {
+  outline: 1px dotted #000;
+  outline-offset: -2px;
+  border-radius: 0;
+}
+
+[data-skin^='outlook'] .app {
+  grid-template-columns: 218px minmax(300px, 400px) 1fr;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 4px 4px;
+  padding: 0;
+}
+[data-skin^='outlook'] .classic-bar {
+  display: block;
+  grid-column: 1 / -1;
+  grid-row: 1;
+  background: var(--o-bar);
+  border-bottom: 1px solid var(--o-frame);
+}
+[data-skin^='outlook'] .sidebar {
+  grid-row: 2;
+  grid-column: 1;
+  margin-left: 4px;
+}
+[data-skin^='outlook'] .list-pane {
+  grid-row: 2;
+  grid-column: 2;
+}
+[data-skin^='outlook'] .reader-pane {
+  grid-row: 2;
+  grid-column: 3;
+  margin-right: 4px;
+}
+[data-skin^='outlook'] .classic-status {
+  display: flex;
+  grid-column: 1 / -1;
+  grid-row: 3;
+}
+
+/* ───────────── menu bar & toolbar */
+
+.menubar {
+  display: flex;
+  padding: 1px 4px 0;
+  background: var(--o-menubar);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.6);
+}
+.menubar button {
+  padding: 3px 8px 4px;
+  border: 1px solid transparent;
+  font-size: var(--o-size);
+  color: #000;
+}
+.menubar button:hover,
+.menubar button.open {
+  background: var(--o-hover);
+  border-color: var(--o-hover-line);
+}
+.menubar button.open {
+  background: #fff;
+  border-color: var(--o-menu-line);
+  border-bottom-color: #fff;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  padding: 3px 6px 4px;
+  min-height: 32px;
+}
+.tool {
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 6px 0 4px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  font-size: var(--o-size);
+  color: #000;
+  white-space: nowrap;
+}
+.tool:hover:not(:disabled) {
+  background: var(--o-hover);
+  border-color: var(--o-hover-line);
+}
+.tool:active:not(:disabled) {
+  background: var(--o-press);
+}
+.tool:disabled {
+  opacity: 0.4;
+  filter: grayscale(1);
+  cursor: default;
+}
+.tsep {
+  width: 1px;
+  height: 20px;
+  margin: 0 4px;
+  background: #6a8ccb;
+  box-shadow: 1px 0 0 #fff;
+}
+[data-skin='outlook2007'] .tsep {
+  background: #9ebbe2;
+}
+.toolbar .grow {
+  flex: 1;
+}
+.helpbox {
+  width: 150px;
+  height: 20px;
+  padding: 1px 6px;
+  border: 1px solid #7f9db9;
+  font-size: var(--o-size);
+  font-style: italic;
+  color: #555;
+  background: #fff;
+  cursor: pointer;
+}
+
+/* colourful icons, as Office had them */
+[data-skin^='outlook'] .tool .i-compose,
+[data-skin^='outlook'] .module .i-mail {
+  color: #1f5fbf;
+  fill: #fff3c4;
+}
+[data-skin^='outlook'] .tool .i-trash {
+  color: #333;
+  fill: #dfe7f3;
+}
+[data-skin^='outlook'] .tool .i-printer {
+  color: #444;
+  fill: #f2f2f2;
+}
+[data-skin^='outlook'] .tool .i-folder,
+[data-skin^='outlook'] .nav-item .i-folder,
+[data-skin^='outlook'] .nav-item .i-briefcase,
+[data-skin^='outlook'] .nav-item .i-plane {
+  color: #b88a16;
+  fill: #f9d978;
+}
+[data-skin^='outlook'] .tool .i-reply,
+[data-skin^='outlook'] .tool .i-replyAll {
+  color: #7a2fb3;
+}
+[data-skin^='outlook'] .tool .i-forward {
+  color: #1a8a3a;
+}
+[data-skin^='outlook'] .tool .i-refresh {
+  color: #1f6fd0;
+}
+[data-skin^='outlook'] .tool .i-search {
+  color: #1f4f9f;
+}
+[data-skin^='outlook'] .tool .i-flag {
+  color: #d01d1d;
+  fill: #ff5a4a;
+}
+[data-skin^='outlook'] .tool .i-sparkles {
+  color: #b5168f;
+  fill: #ffd1f3;
+}
+[data-skin^='outlook'] .module .i-calendar {
+  color: #1f5fbf;
+  fill: #fff;
+}
+[data-skin^='outlook'] .module .i-users {
+  color: #a45c0b;
+  fill: #fdd8a3;
+}
+[data-skin^='outlook'] .module .i-tasks {
+  color: #2e7d32;
+  fill: #e5f6e5;
+}
+
+/* ───────────── panes */
+
+[data-skin^='outlook'] .pane {
+  background: #fff;
+  border: 1px solid var(--o-frame);
+  border-radius: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* navigation pane */
+[data-skin^='outlook'] .sidebar {
+  padding: 0;
+  background: var(--o-nav-bg);
+  border: 1px solid var(--o-frame);
+  color: #000;
+}
+.pane-title,
+[data-skin^='outlook'] .title-row h1 {
+  font-family: var(--o-font);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0;
+  color: var(--o-title-ink);
+  text-shadow: var(--o-title-shadow);
+}
+[data-skin^='outlook'] .pane-title {
+  display: block;
+  padding: 4px 8px 5px;
+  background: var(--o-title);
+  border-bottom: 1px solid var(--o-frame);
+}
+[data-skin^='outlook'] .brand,
+[data-skin^='outlook'] .compose-btn,
+[data-skin^='outlook'] .side-foot {
+  display: none;
+}
+[data-skin^='outlook'] .nav {
+  padding: 4px 0;
+  background: #fff;
+  margin: 0;
+}
+[data-skin^='outlook'] .nav-label {
+  font-size: var(--o-size);
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--o-group-ink);
+  padding: 4px 8px 4px;
+  margin: 0 4px 2px;
+  border-bottom: 1px solid var(--o-group-line);
+}
+.tree-root {
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  font-size: var(--o-size);
+  color: #000;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+[data-skin^='outlook'] .tree-root {
+  display: flex;
+}
+.tree-root .ic {
+  color: #1f5fbf;
+}
+[data-skin^='outlook'] .nav-item {
+  height: 20px;
+  gap: 5px;
+  padding: 0 4px 0 24px;
+  margin: 0 2px;
+  border-radius: 0;
+  border: 1px solid transparent;
+  font-weight: 400;
+  font-size: var(--o-size);
+  color: #000;
+  box-shadow: none;
+}
+[data-skin^='outlook'] .nav-item .ic {
+  width: 16px;
+  height: 16px;
+  color: #1f5fbf;
+}
+[data-skin^='outlook'] .nav-item:hover {
+  background: var(--o-hover);
+  border-color: var(--o-hover-line);
+  color: #000;
+}
+[data-skin^='outlook'] .nav-item.active {
+  background: var(--o-sel);
+  color: var(--o-sel-ink);
+  border-color: transparent;
+  box-shadow: none;
+}
+[data-skin^='outlook'] .nav-item.active .ic {
+  color: var(--o-sel-ink);
+}
+[data-skin='outlook2007'] .nav-item.active {
+  border-color: #99c1f5;
+}
+[data-skin='outlook2007'] .nav-item.active .ic {
+  color: #1f5fbf;
+}
+[data-skin^='outlook'] .nav-item .name {
+  flex: 0 1 auto;
+}
+[data-skin^='outlook'] .nav-item .count {
+  font-size: var(--o-size);
+  color: #0000ff;
+  font-weight: 700;
+}
+[data-skin^='outlook'] .nav-item .count::before {
+  content: '(';
+}
+[data-skin^='outlook'] .nav-item .count::after {
+  content: ')';
+}
+[data-skin^='outlook'] .nav-item .count:not(.hot) {
+  color: #0000ff;
+}
+[data-skin^='outlook'] .nav-item.active .count {
+  color: inherit;
+}
+[data-skin^='outlook'] .nav-item:has(.count.hot) .name,
+[data-skin^='outlook'] .nav-item:has(.count) .name {
+  font-weight: 700;
+}
+[data-skin^='outlook'] .nav-item.drop {
+  background: var(--o-hover);
+  box-shadow: inset 0 0 0 1px var(--o-hover-line);
+}
+
+/* the big module buttons at the bottom of the navigation pane */
+.modules {
+  border-top: 4px solid var(--o-frame);
+}
+[data-skin^='outlook'] .modules {
+  display: block;
+}
+.module {
+  width: 100%;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  font-weight: 700;
+  font-size: var(--o-size);
+  color: #000;
+  background: var(--o-module);
+  border-top: 1px solid var(--o-frame);
+}
+.module:first-child {
+  border-top: 0;
+}
+.module .ic {
+  width: 22px;
+  height: 22px;
+}
+.module:hover {
+  background: var(--o-module-hover);
+}
+.module.on {
+  background: var(--o-module-on);
+}
+
+/* ───────────── message list */
+
+[data-skin^='outlook'] .list-head {
+  padding: 0;
+  gap: 0;
+  border-bottom: 1px solid var(--o-frame);
+}
+[data-skin^='outlook'] .title-row {
+  order: -1;
+  min-height: 0;
+  padding: 3px 6px 4px 8px;
+  background: var(--o-title);
+  border-bottom: 1px solid var(--o-frame);
+}
+[data-skin^='outlook'] .title-row h1 small {
+  font-size: var(--o-size);
+  font-weight: 400;
+  color: inherit;
+  opacity: 0.85;
+}
+[data-skin^='outlook'] .title-row .icon-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 0;
+  border: 1px solid transparent;
+  color: var(--o-title-ink);
+}
+[data-skin^='outlook'] .title-row .icon-btn:hover {
+  background: var(--o-hover);
+  border-color: var(--o-hover-line);
+  color: #000;
+}
+[data-skin^='outlook'] .search {
+  height: 24px;
+  margin: 5px 6px;
+  padding: 0 2px 0 6px;
+  border-radius: 0;
+  background: #fff;
+  border: 1px solid #a5acb5;
+  color: #555;
+  box-shadow: none;
+}
+[data-skin^='outlook'] .search:focus-within {
+  border-color: #e3a21a;
+  box-shadow: none;
+  background: #fff;
+}
+[data-skin^='outlook'] .search input {
+  font-size: var(--o-size);
+}
+[data-skin^='outlook'] .search input::placeholder {
+  font-style: italic;
+}
+[data-skin^='outlook'] .chips {
+  display: none;
+}
+[data-skin^='outlook'] .bulk {
+  margin: 0 6px 5px;
+  border-radius: 0;
+  background: #ffffe1;
+  border: 1px solid #c9b25b;
+  color: #000;
+  font-size: var(--o-size);
+  padding: 1px 2px 1px 8px;
+  animation: none;
+}
+[data-skin^='outlook'] .bulk .icon-btn {
+  width: 24px;
+  height: 24px;
+  color: #000;
+  border-radius: 0;
+}
+.arranged {
+  justify-content: space-between;
+  padding: 3px 8px 3px;
+  font-size: var(--o-size);
+  font-weight: 700;
+  color: #000;
+  background: linear-gradient(180deg, #fff, #ebeef3);
+  border-top: 1px solid #d5dbe3;
+}
+[data-skin^='outlook'] .arranged {
+  display: flex;
+}
+.arranged span:last-child {
+  font-weight: 400;
+  color: #333;
+}
+
+[data-skin^='outlook'] .list {
+  padding: 0;
+}
+[data-skin^='outlook'] .group {
+  top: 0;
+  padding: 6px 8px 2px;
+  margin: 0 4px;
+  font-size: var(--o-size);
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--o-group-ink);
+  background: #fff;
+  border-bottom: 1px solid var(--o-group-line);
+}
+[data-skin^='outlook'] .group::before {
+  content: 'Дата: ';
+}
+
+[data-skin^='outlook'] .row {
+  display: block;
+  padding: 3px 26px 4px 26px;
+  border-radius: 0;
+  border-bottom: 1px solid #e7edf6;
+  font-size: var(--o-size);
+  color: #000;
+}
+[data-skin^='outlook'] .row::before,
+[data-skin^='outlook'] .row .avatar,
+[data-skin^='outlook'] .row .dot,
+[data-skin^='outlook'] .row .row-actions,
+[data-skin^='outlook'] .row .marks .starred {
+  display: none;
+}
+[data-skin^='outlook'] .row:hover {
+  background: #f3f7fd;
+}
+[data-skin^='outlook'] .row.cursor {
+  background: none;
+  outline: 1px dotted #000;
+  outline-offset: -1px;
+}
+[data-skin^='outlook'] .row.active,
+[data-skin^='outlook'] .row.selected {
+  background: var(--o-sel);
+  box-shadow: none;
+}
+[data-skin^='outlook'] .row.active *,
+[data-skin^='outlook'] .row.selected * {
+  color: var(--o-sel-ink) !important;
+}
+[data-skin^='outlook'] .row.active .snip,
+[data-skin^='outlook'] .row.selected .snip {
+  color: var(--o-sel-sub) !important;
+}
+[data-skin^='outlook'] .row .who,
+[data-skin^='outlook'] .row .subj,
+[data-skin^='outlook'] .row time {
+  font-size: var(--o-size);
+  color: #000;
+  font-weight: 400;
+}
+[data-skin^='outlook'] .row .subj {
+  margin-top: 0;
+  color: #333;
+}
+[data-skin^='outlook'] .row .snip {
+  font-size: var(--o-size);
+  color: #1f4fa8;
+  margin-top: 0;
+}
+[data-skin^='outlook'] .row.unread .who,
+[data-skin^='outlook'] .row.unread .subj,
+[data-skin^='outlook'] .row.unread time {
+  font-weight: 700;
+  color: #000;
+}
+[data-skin^='outlook'] .row .count-badge {
+  color: #555;
+  font-weight: 400;
+}
+[data-skin^='outlook'] .row .count-badge::before {
+  content: '(';
+}
+[data-skin^='outlook'] .row .count-badge::after {
+  content: ')';
+}
+.row .env {
+  position: absolute;
+  left: 6px;
+  top: 4px;
+}
+[data-skin^='outlook'] .row .env {
+  display: block;
+}
+.row .env .ic {
+  color: #8a6a12;
+  fill: #f7e3a1;
+}
+.row:not(.unread) .env .ic {
+  color: #7b8aa6;
+  fill: #fff;
+}
+.row .flag {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  border: 1px solid transparent;
+}
+[data-skin^='outlook'] .row .flag {
+  display: grid;
+}
+.row .flag .ic {
+  width: 13px;
+  height: 13px;
+  color: #c8ced8;
+}
+.row .flag:hover {
+  border-color: var(--o-hover-line);
+  background: var(--o-hover);
+}
+.row .flag.on .ic {
+  color: #c00 !important;
+  fill: #f33;
+}
+[data-skin^='outlook'] .row.fresh {
+  animation: none;
+}
+[data-skin^='outlook'] .skeleton {
+  padding: 6px 26px;
+}
+[data-skin^='outlook'] .skeleton .a {
+  display: none;
+}
+[data-skin^='outlook'] .skeleton {
+  grid-template-columns: 1fr;
+}
+[data-skin^='outlook'] .skeleton i {
+  border-radius: 0;
+  height: 9px;
+}
+[data-skin^='outlook'] .list-end {
+  font-size: var(--o-size);
+}
+[data-skin^='outlook'] .fab {
+  border-radius: 4px;
+}
+
+/* ───────────── reading pane */
+
+[data-skin^='outlook'] .reader-bar {
+  display: none;
+}
+[data-skin^='outlook'] .reader {
+  padding: 0;
+  background: #fff;
+}
+[data-skin^='outlook'] .reader-inner {
+  max-width: none;
+  animation: none;
+}
+[data-skin^='outlook'] .subject {
+  font-family: var(--o-font);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.3;
+  margin: 0;
+  padding: 8px 12px 2px;
+  background: var(--o-header);
+}
+[data-skin^='outlook'] .subject-meta {
+  margin: 0;
+  padding: 2px 12px 7px;
+  background: var(--o-header);
+  border-bottom: 1px solid var(--o-group-line);
+  font-size: var(--o-size);
+  color: #333;
+}
+[data-skin^='outlook'] .subject-meta:empty {
+  padding: 0 12px 4px;
+}
+[data-skin^='outlook'] .tag {
+  height: auto;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  color: #333;
+  font-weight: 400;
+}
+[data-skin^='outlook'] .tag + .tag::before {
+  content: '·';
+  margin-right: 4px;
+}
+
+[data-skin^='outlook'] .msg {
+  border: 0;
+  border-bottom: 1px solid var(--o-group-line);
+  border-radius: 0;
+  box-shadow: none;
+  margin: 0;
+  background: #fff;
+}
+[data-skin^='outlook'] .msg-head {
+  padding: 6px 12px;
+  gap: 8px;
+  background: linear-gradient(180deg, #fbfdff, #eef4fc);
+  border-bottom: 1px solid #e1e9f5;
+}
+[data-skin^='outlook'] .msg.collapsed .msg-head {
+  padding: 4px 12px;
+  border-bottom: 0;
+}
+[data-skin^='outlook'] .msg.collapsed:hover {
+  box-shadow: none;
+}
+[data-skin^='outlook'] .msg.collapsed:hover .msg-head {
+  background: var(--o-hover);
+}
+[data-skin^='outlook'] .msg-head .avatar {
+  display: none;
+}
+[data-skin^='outlook'] .msg-who .name {
+  font-size: var(--o-size);
+  font-weight: 700;
+}
+[data-skin^='outlook'] .msg-who .name::before {
+  content: 'От: ';
+  font-weight: 400;
+  color: #555;
+}
+[data-skin^='outlook'] .msg-who .addr::before {
+  content: '[';
+}
+[data-skin^='outlook'] .msg-who .addr::after {
+  content: ']';
+}
+[data-skin^='outlook'] .msg-who .addr,
+[data-skin^='outlook'] .msg-who .to,
+[data-skin^='outlook'] .msg-who .preview,
+[data-skin^='outlook'] .msg-head time {
+  font-size: var(--o-size);
+  color: #333;
+}
+[data-skin^='outlook'] .msg-who .to {
+  text-transform: none;
+}
+[data-skin^='outlook'] .msg-head .acts .icon-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 0;
+  border: 1px solid transparent;
+  color: #333;
+}
+[data-skin^='outlook'] .msg-head .acts .icon-btn:hover {
+  background: var(--o-hover);
+  border-color: var(--o-hover-line);
+}
+[data-skin^='outlook'] .msg-body {
+  padding: 10px 12px 14px;
+}
+[data-skin^='outlook'] .frame-wrap {
+  border-radius: 0;
+}
+[data-skin^='outlook'] .frame-wrap.paper {
+  padding: 0;
+  box-shadow: none;
+}
+
+/* the yellow InfoBar */
+[data-skin^='outlook'] .remote-bar {
+  border-radius: 0;
+  background: #ffffe1;
+  border: 1px solid #aca899;
+  color: #000;
+  font-size: var(--o-size);
+  padding: 3px 6px;
+  margin: 0 0 10px;
+}
+[data-skin^='outlook'] .remote-bar .ic {
+  color: #c00;
+}
+[data-skin^='outlook'] .remote-bar button {
+  color: #00c;
+  text-decoration: underline;
+  font-weight: 400;
+  border-radius: 0;
+  padding: 0 4px;
+}
+[data-skin^='outlook'] .remote-bar button:hover {
+  background: none;
+}
+
+[data-skin^='outlook'] .ai-card {
+  margin: 8px 12px;
+  border-radius: 0;
+  background: #ffffe1;
+  border: 1px solid #aca899;
+  box-shadow: none;
+  font-size: var(--o-size);
+  animation: none;
+  padding: 6px 30px 6px 34px;
+}
+[data-skin^='outlook'] .ai-card > .ic {
+  left: 10px;
+  top: 8px;
+  color: #b5168f;
+}
+[data-skin^='outlook'] .ai-card .ai-title {
+  font-size: var(--o-size);
+  letter-spacing: 0;
+  text-transform: none;
+  color: #000;
+}
+[data-skin^='outlook'] .ai-card .close {
+  width: 20px;
+  height: 20px;
+  top: 3px;
+  right: 3px;
+  border-radius: 0;
+}
+
+[data-skin^='outlook'] .att {
+  border-radius: 0;
+  border: 1px solid transparent;
+  background: none;
+  padding: 2px 6px 2px 2px;
+  box-shadow: none;
+}
+[data-skin^='outlook'] .att:hover {
+  background: var(--o-hover);
+  border-color: var(--o-hover-line);
+  box-shadow: none;
+}
+[data-skin^='outlook'] .att .thumb {
+  width: 30px;
+  height: 30px;
+  border-radius: 0;
+}
+[data-skin^='outlook'] .att b {
+  font-weight: 400;
+  color: #00c;
+  text-decoration: underline;
+  font-size: var(--o-size);
+}
+[data-skin^='outlook'] .att small {
+  font-size: var(--o-size);
+}
+[data-skin^='outlook'] .quick {
+  margin: 10px 12px 14px;
+}
+
+/* XP / Office push buttons */
+[data-skin^='outlook'] .quick button,
+[data-skin^='outlook'] .empty .quick button {
+  height: 23px;
+  padding: 0 10px;
+  border-radius: 3px;
+  border: 1px solid #003c74;
+  background: linear-gradient(180deg, #fff 0%, #f0f0ea 60%, #d6d0c5 100%);
+  color: #000;
+  font-weight: 400;
+  font-size: var(--o-size);
+  transform: none !important;
+}
+[data-skin^='outlook'] .quick button:hover {
+  box-shadow: inset 0 0 0 2px #f8b636;
+  border-color: #003c74;
+}
+[data-skin^='outlook'] .quick button.magic {
+  color: #000;
+  background: linear-gradient(180deg, #fff 0%, #f0f0ea 60%, #d6d0c5 100%);
+}
+[data-skin='outlook2007'] .quick button,
+[data-skin='outlook2007'] .quick button.magic {
+  border-color: #8db2e3;
+  background: linear-gradient(180deg, #f6faff 0%, #e2eefc 49%, #d0e3fb 50%, #e6f0fd 100%);
+}
+[data-skin='outlook2007'] .quick button:hover {
+  box-shadow: none;
+  border-color: var(--o-hover-line);
+  background: var(--o-hover);
+}
+
+[data-skin^='outlook'] .empty {
+  font-size: var(--o-size);
+  color: #333;
+  animation: none;
+}
+[data-skin^='outlook'] .empty .orb {
+  display: none;
+}
+[data-skin^='outlook'] .empty h2 {
+  font-family: var(--o-font);
+  font-size: 13px;
+  letter-spacing: 0;
+  margin-top: 0;
+}
+[data-skin^='outlook'] .empty .hint {
+  display: none;
+}
+
+/* ───────────── status bar */
+
+.classic-status {
+  align-items: center;
+  gap: 0;
+  height: 22px;
+  padding: 0 4px;
+  background: var(--o-status);
+  border-top: 1px solid var(--o-frame);
+  font-size: var(--o-size);
+  color: var(--o-status-ink);
+}
+.classic-status span {
+  padding: 0 10px;
+  white-space: nowrap;
+}
+.classic-status span + span {
+  border-left: 1px solid rgba(0, 0, 0, 0.18);
+  box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.5);
+}
+.classic-status .grow {
+  flex: 1;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+.classic-status .grow + span {
+  border-left: 0;
+  box-shadow: none;
+}
+
+/* ───────────── message window (compose) */
+
+[data-skin^='outlook'] .composer {
+  border-radius: 7px 7px 0 0;
+  border: 1px solid #0831d9;
+  background: var(--o-dialog);
+  box-shadow: 2px 4px 14px rgba(0, 0, 0, 0.35);
+  animation: none;
+  font-size: var(--o-size);
+}
+[data-skin='outlook2007'] .composer {
+  border-color: #6593cf;
+}
+[data-skin^='outlook'] .composer.max {
+  border-radius: 7px 7px 0 0;
+}
+[data-skin^='outlook'] .c-head {
+  height: 28px;
+  padding: 0 3px 0 8px;
+  border-radius: 6px 6px 0 0;
+  background: var(--o-window);
+  color: var(--o-window-ink);
+  border-bottom: 0;
+}
+[data-skin^='outlook'] .c-head b {
+  font-weight: 700;
+  font-size: 12px;
+  text-shadow: var(--o-title-shadow);
+}
+[data-skin^='outlook'] .c-head b::after {
+  content: ' — Сообщение';
+  font-weight: 400;
+}
+[data-skin^='outlook'] .c-head .saved {
+  color: inherit;
+  opacity: 0.85;
+  font-size: var(--o-size);
+}
+[data-skin^='outlook'] .c-head .icon-btn {
+  width: 21px;
+  height: 21px;
+  border-radius: 3px;
+  color: #fff;
+  background: linear-gradient(180deg, #4a8bff, #2662e6);
+  border: 1px solid #fff;
+  margin-left: 2px;
+}
+[data-skin^='outlook'] .c-head .icon-btn:last-child {
+  background: linear-gradient(180deg, #e88a6c, #c4421d);
+}
+[data-skin='outlook2007'] .c-head .icon-btn {
+  color: #15428b;
+  background: none;
+  border-color: transparent;
+}
+[data-skin='outlook2007'] .c-head .icon-btn:last-child {
+  background: linear-gradient(180deg, #f0a08a, #d4462a);
+  color: #fff;
+}
+[data-skin^='outlook'] .c-head .icon-btn .ic {
+  width: 13px;
+  height: 13px;
+  stroke-width: 2.6;
+}
+[data-skin^='outlook'] .c-fields {
+  padding: 6px 8px 4px;
+  background: var(--o-dialog);
+}
+[data-skin^='outlook'] .field {
+  min-height: 26px;
+  border-bottom: 0;
+  margin-bottom: 3px;
+  align-items: center;
+}
+[data-skin^='outlook'] .field > label {
+  width: 70px;
+  line-height: 20px;
+  height: 22px;
+  margin-right: 4px;
+  text-align: center;
+  font-size: var(--o-size);
+  color: #000;
+  border: 1px solid #7f9db9;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #fff 0%, #f0f0ea 60%, #d6d0c5 100%);
+}
+[data-skin^='outlook'] .field > label::after {
+  content: '...';
+}
+[data-skin^='outlook'] .field:last-child > label {
+  border: 0;
+  background: none;
+  text-align: left;
+}
+[data-skin^='outlook'] .field:last-child > label::after {
+  content: ':';
+}
+[data-skin^='outlook'] .recips,
+[data-skin^='outlook'] .field input.subject-input {
+  min-height: 22px;
+  padding: 1px 3px;
+  background: #fff;
+  border: 1px solid #7f9db9;
+  font-size: var(--o-size);
+}
+[data-skin^='outlook'] .field input {
+  height: 20px;
+  font-size: var(--o-size);
+}
+[data-skin^='outlook'] .field .subject-input {
+  font-weight: 400;
+}
+[data-skin^='outlook'] .pill {
+  height: 18px;
+  padding: 0 2px 0 3px;
+  border-radius: 0;
+  background: none;
+  border: 0;
+  color: #00c;
+  text-decoration: underline;
+  font-size: var(--o-size);
+  animation: none;
+}
+[data-skin^='outlook'] .pill::after {
+  content: ';';
+  color: #000;
+  text-decoration: none;
+}
+[data-skin^='outlook'] .pill .avatar {
+  display: none;
+}
+[data-skin^='outlook'] .pill button {
+  width: 14px;
+  height: 14px;
+  border-radius: 0;
+}
+[data-skin^='outlook'] .field .toggles button {
+  font-size: var(--o-size);
+  color: #00c;
+  text-decoration: underline;
+  border-radius: 0;
+}
+[data-skin^='outlook'] .field .toggles {
+  padding-top: 0;
+}
+[data-skin^='outlook'] .suggest {
+  border-radius: 0;
+  padding: 1px;
+  border: 1px solid #000;
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  left: 74px;
+  animation: none;
+}
+[data-skin^='outlook'] .suggest button {
+  border-radius: 0;
+  padding: 2px 6px;
+}
+[data-skin^='outlook'] .suggest button.on {
+  background: #316ac5;
+  color: #fff;
+}
+[data-skin^='outlook'] .suggest button.on small {
+  color: #dfe9fb;
+}
+[data-skin^='outlook'] .suggest .avatar {
+  display: none;
+}
+[data-skin^='outlook'] .suggest b,
+[data-skin^='outlook'] .suggest small {
+  font-size: var(--o-size);
+}
+[data-skin^='outlook'] .c-body {
+  margin: 0 8px;
+  padding: 8px 10px;
+  background: #fff;
+  border: 1px solid #7f9db9;
+}
+[data-skin^='outlook'] .editor {
+  font-family: Arial, 'Liberation Sans', Helvetica, sans-serif;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #000;
+}
+[data-skin^='outlook'] .editor blockquote {
+  border-left: 2px solid #1010ff;
+  color: #000;
+}
+[data-skin^='outlook'] .c-atts {
+  padding: 6px 8px 0;
+}
+[data-skin^='outlook'] .c-att {
+  border-radius: 0;
+  background: #fff;
+  border: 1px solid #7f9db9;
+  height: 22px;
+  font-size: var(--o-size);
+  animation: none;
+}
+[data-skin^='outlook'] .ai-prompt {
+  margin: 6px 8px 0;
+  border-radius: 0;
+  border: 1px solid #aca899;
+  background: #ffffe1;
+  animation: none;
+}
+[data-skin^='outlook'] .ai-prompt button {
+  border-radius: 3px;
+  font-size: var(--o-size);
+  font-weight: 400;
+  color: #000;
+  height: 22px;
+  border: 1px solid #003c74;
+  background: linear-gradient(180deg, #fff 0%, #f0f0ea 60%, #d6d0c5 100%);
+}
+[data-skin^='outlook'] .c-foot {
+  order: -1;
+  padding: 3px 6px;
+  border-top: 0;
+  border-bottom: 1px solid var(--o-frame);
+  background: var(--o-bar);
+}
+[data-skin^='outlook'] .c-head {
+  order: -2;
+}
+[data-skin^='outlook'] .send-btn {
+  height: 24px;
+  padding: 0 8px 0 6px;
+  border-radius: 2px;
+  border: 1px solid transparent;
+  background: none;
+  box-shadow: none;
+  color: #000;
+  font-weight: 700;
+  font-size: var(--o-size);
+  margin-right: 4px;
+  transform: none !important;
+}
+[data-skin^='outlook'] .send-btn .ic {
+  color: #1f5fbf;
+  fill: #fff3c4;
+}
+[data-skin^='outlook'] .send-btn:hover,
+[data-skin^='outlook'] .c-foot .icon-btn:hover {
+  background: var(--o-hover);
+  border-color: var(--o-hover-line);
+}
+[data-skin^='outlook'] .c-foot .icon-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 2px;
+  border: 1px solid transparent;
+  color: #000;
+}
+[data-skin^='outlook'] .fmt {
+  border-left: 1px solid #6a8ccb;
+}
+[data-skin^='outlook'] .fmt .icon-btn {
+  width: 24px;
+  height: 24px;
+}
+[data-skin^='outlook'] .composer.dragging::after {
+  border-radius: 0;
+  backdrop-filter: none;
+  background: rgba(255, 255, 225, 0.9);
+  border-color: #000080;
+  color: #000;
+}
+
+/* ───────────── dialogs, menus, alerts, tooltips */
+
+[data-skin^='outlook'] .scrim {
+  background: rgba(0, 0, 0, 0.12);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  animation: none;
+}
+[data-skin^='outlook'] .sheet {
+  border-radius: 7px 7px 0 0;
+  border: 1px solid #0831d9;
+  background: var(--o-dialog);
+  box-shadow: 2px 4px 14px rgba(0, 0, 0, 0.35);
+  animation: none;
+  font-size: var(--o-size);
+}
+[data-skin='outlook2007'] .sheet {
+  border-color: #6593cf;
+}
+[data-skin^='outlook'] .sheet-head {
+  padding: 3px 3px 3px 8px;
+  background: var(--o-window);
+  border-radius: 6px 6px 0 0;
+}
+[data-skin^='outlook'] .sheet-head h2 {
+  font-family: var(--o-font);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--o-window-ink);
+  text-shadow: var(--o-title-shadow);
+}
+[data-skin^='outlook'] .sheet-head .icon-btn {
+  width: 21px;
+  height: 21px;
+  border-radius: 3px;
+  color: #fff;
+  background: linear-gradient(180deg, #e88a6c, #c4421d);
+  border: 1px solid #fff;
+}
+[data-skin^='outlook'] .sheet-head .icon-btn .ic {
+  width: 13px;
+  height: 13px;
+  stroke-width: 2.6;
+}
+[data-skin^='outlook'] .settings {
+  margin: 8px;
+  padding: 2px 12px 10px;
+  background: #fff;
+  border: 1px solid #919b9c;
+}
+[data-skin^='outlook'] .setting {
+  padding: 8px 0;
+}
+[data-skin^='outlook'] .setting .lbl b {
+  font-size: var(--o-size);
+}
+[data-skin^='outlook'] .setting .lbl small {
+  font-size: var(--o-size);
+  color: #555;
+}
+[data-skin^='outlook'] .seg {
+  padding: 0;
+  background: none;
+  border-radius: 0;
+  gap: 3px;
+}
+[data-skin^='outlook'] .seg button {
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 3px;
+  border: 1px solid #003c74;
+  background: linear-gradient(180deg, #fff 0%, #f0f0ea 60%, #d6d0c5 100%);
+  font-size: var(--o-size);
+  font-weight: 400;
+  color: #000;
+}
+[data-skin^='outlook'] .seg button.on {
+  background: linear-gradient(180deg, #d6d0c5 0%, #e6e3da 100%);
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.25);
+  font-weight: 700;
+}
+[data-skin^='outlook'] .switch {
+  width: 13px;
+  height: 13px;
+  border-radius: 0;
+  border: 1px solid #1c5180;
+  background: linear-gradient(135deg, #dcdcd7, #fff);
+}
+[data-skin^='outlook'] .switch::after {
+  display: none;
+}
+[data-skin^='outlook'] .switch.on {
+  background: linear-gradient(135deg, #dcdcd7, #fff);
+}
+[data-skin^='outlook'] .switch.on::before {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 0;
+  width: 4px;
+  height: 8px;
+  border: solid #21a121;
+  border-width: 0 2px 2px 0;
+  transform: rotate(40deg);
+}
+[data-skin^='outlook'] textarea.sig-input {
+  border-radius: 0;
+  border: 1px solid #7f9db9;
+  background: #fff;
+  font-size: var(--o-size);
+}
+[data-skin^='outlook'] .swatch {
+  border-radius: 0;
+  width: 20px;
+  height: 20px;
+}
+
+[data-skin^='outlook'] .palette-input {
+  height: 34px;
+  padding: 0 10px;
+  background: var(--o-window);
+  color: var(--o-window-ink);
+  border-radius: 6px 6px 0 0;
+  border-bottom: 0;
+}
+[data-skin^='outlook'] .palette-input input {
+  font-size: var(--o-size);
+  height: 22px;
+  padding: 0 6px;
+  background: #fff;
+  border: 1px solid #7f9db9;
+  color: #000;
+}
+[data-skin^='outlook'] .palette-list {
+  margin: 8px;
+  padding: 1px;
+  background: #fff;
+  border: 1px solid #7f9db9;
+}
+[data-skin^='outlook'] .palette-section {
+  font-size: var(--o-size);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--o-group-ink);
+  padding: 4px 6px 2px;
+  border-bottom: 1px solid var(--o-group-line);
+}
+[data-skin^='outlook'] .palette-item {
+  border-radius: 0;
+  padding: 3px 6px;
+  font-size: var(--o-size);
+  color: #000;
+}
+[data-skin^='outlook'] .palette-item.on {
+  background: #316ac5;
+  color: #fff;
+}
+[data-skin^='outlook'] .palette-item.on .ic,
+[data-skin^='outlook'] .palette-item.on mark {
+  color: #fff;
+}
+[data-skin^='outlook'] .keys {
+  margin: 8px;
+  padding: 4px 12px;
+  background: #fff;
+  border: 1px solid #919b9c;
+  font-size: var(--o-size);
+}
+[data-skin^='outlook'] .keys kbd {
+  display: inline-grid;
+  border-radius: 0;
+  font-family: var(--o-font);
+}
+
+/* Office menus: an icon gutter down the left, a framed highlight */
+[data-skin^='outlook'] .menu {
+  border-radius: 0;
+  padding: 2px;
+  border: 1px solid var(--o-menu-line);
+  background: linear-gradient(90deg, transparent 0 28px, #fcfcfc 28px), var(--o-menu-gutter);
+  background-size: auto, 28px 100%;
+  background-repeat: no-repeat;
+  box-shadow: 2px 2px 3px rgba(0, 0, 0, 0.3);
+  animation: none;
+  min-width: 200px;
+  font-size: var(--o-size);
+}
+[data-skin^='outlook'] .menu button {
+  border-radius: 0;
+  padding: 3px 18px 3px 4px;
+  gap: 12px;
+  border: 1px solid transparent;
+  color: #000;
+}
+[data-skin^='outlook'] .menu button .ic {
+  width: 15px;
+  height: 15px;
+  color: #1f4f9f;
+}
+[data-skin^='outlook'] .menu button.checked .ic {
+  color: #000;
+  stroke-width: 2.4;
+}
+[data-skin^='outlook'] .menu button:hover:not(:disabled) {
+  background: var(--o-hover);
+  border-color: var(--o-hover-line);
+}
+[data-skin^='outlook'] .menu button:disabled {
+  color: #9d9d9d;
+  cursor: default;
+}
+[data-skin^='outlook'] .menu button:disabled .ic {
+  color: #b5b5b5;
+}
+[data-skin^='outlook'] .menu hr {
+  margin: 2px 0 2px 34px;
+  border-top-color: #a6a6a6;
+}
+.menu .label {
+  flex: 1;
+}
+.menu .hint {
+  margin-left: 24px;
+  color: var(--ink-3);
+  font-size: 12px;
+}
+[data-skin^='outlook'] .menu .hint {
+  color: #000;
+  font-size: var(--o-size);
+}
+.menu button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+[data-skin^='outlook'] .menu button:disabled {
+  opacity: 1;
+}
+
+/* the Outlook "desktop alert" */
+[data-skin^='outlook'] .toasts {
+  left: auto;
+  right: 12px;
+  bottom: 30px;
+  transform: none;
+  align-items: flex-end;
+}
+[data-skin^='outlook'] .toast {
+  min-width: 300px;
+  border-radius: 0;
+  padding: 8px 8px 8px 12px;
+  color: #000;
+  background: linear-gradient(180deg, #ffffff 0%, #e3efff 100%);
+  border: 1px solid var(--o-frame);
+  box-shadow: 2px 3px 8px rgba(0, 0, 0, 0.35);
+  font-weight: 400;
+  font-size: var(--o-size);
+  animation: alert 0.4s ease-out;
+}
+@keyframes alert {
+  from {
+    opacity: 0;
+  }
+}
+[data-skin^='outlook'] .toast .ic {
+  color: #1f5fbf;
+}
+[data-skin^='outlook'] .toast.error .ic {
+  color: #c00;
+}
+[data-skin^='outlook'] .toast span {
+  flex: 1;
+}
+[data-skin^='outlook'] .toast button {
+  height: 22px;
+  font-weight: 400;
+  color: #00c;
+  text-decoration: underline;
+  border-radius: 0;
+}
+[data-skin^='outlook'] .toast button:hover {
+  background: none;
+}
+[data-skin^='outlook'] .toast .bar {
+  background: var(--o-frame);
+}
+
+[data-skin^='outlook'] [data-tip]:hover::after {
+  top: calc(100% + 4px);
+  border-radius: 0;
+  background: #ffffe1;
+  color: #000;
+  border: 1px solid #000;
+  font-weight: 400;
+  font-size: var(--o-size);
+  padding: 1px 4px;
+}
+
+[data-skin^='outlook'] ::-webkit-scrollbar {
+  width: 16px;
+  height: 16px;
+  background: #f4f4f0;
+}
+[data-skin^='outlook'] ::-webkit-scrollbar-thumb {
+  border: 1px solid #fff;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #cad8f9, #b3c9f5);
+  box-shadow: inset 0 0 0 1px #9ab3e6;
+}
+
+/* ───────────── narrow screens */
+
+@media (max-width: 1180px) {
+  [data-skin^='outlook'] .app {
+    grid-template-columns: 190px minmax(280px, 340px) 1fr;
+  }
+  [data-skin^='outlook'] .sidebar .nav-item .name,
+  [data-skin^='outlook'] .sidebar .nav-label {
+    display: revert;
+  }
+  [data-skin^='outlook'] .sidebar .nav-item {
+    justify-content: flex-start;
+    padding: 0 4px 0 24px;
+    height: 20px;
+  }
+  [data-skin^='outlook'] .sidebar .nav-item .count {
+    position: static;
+    font-size: var(--o-size);
+  }
+  [data-skin^='outlook'] .sidebar .nav-item .count:not(.hot) {
+    display: revert;
+  }
+  [data-skin^='outlook'] .tool span {
+    display: none;
+  }
+}
+
+@media (max-width: 820px) {
+  [data-skin^='outlook'] .app {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr);
+    gap: 0;
+  }
+  [data-skin^='outlook'] .classic-bar,
+  [data-skin^='outlook'] .classic-status,
+  [data-skin^='outlook'] .modules {
+    display: none;
+  }
+  [data-skin^='outlook'] .sidebar {
+    margin: 0;
+    width: 260px;
+    background: #fff;
+  }
+  [data-skin^='outlook'] .sidebar .side-foot {
+    display: none;
+  }
+  [data-skin^='outlook'] .list-pane,
+  [data-skin^='outlook'] .reader-pane {
+    grid-row: 1;
+    grid-column: 1;
+    margin: 0;
+  }
+  [data-skin^='outlook'] .reader-bar {
+    display: flex;
+    height: 40px;
+    background: var(--o-bar);
+    border-bottom: 1px solid var(--o-frame);
+  }
+  [data-skin^='outlook'] .reader-bar .icon-btn {
+    border-radius: 0;
+    color: #000;
+  }
+  [data-skin^='outlook'] .toasts {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    align-items: center;
+  }
+}

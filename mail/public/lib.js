@@ -206,7 +206,15 @@ export const DEFAULT_SETTINGS = {
   remoteImages: 'ask',
   trusted: [],
   conversations: true,
+  skin: 'aether', // aether | outlook2003 | outlook2007
 };
+
+export const SKINS = [
+  { value: 'aether', label: 'Aether' },
+  { value: 'outlook2003', label: 'Outlook 2003' },
+  { value: 'outlook2007', label: 'Outlook 2007' },
+];
+export const isClassic = () => settings.skin !== 'aether';
 
 export const settings = { ...DEFAULT_SETTINGS, ...read('aether.settings', {}) };
 
@@ -218,8 +226,10 @@ export function saveSettings(patch) {
 
 export function applyLook() {
   const root = document.documentElement;
-  const dark = settings.theme === 'dark' || (settings.theme === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+  // The classic skins are as they were in 2003: there was no dark mode.
+  const dark = !isClassic() && (settings.theme === 'dark' || (settings.theme === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches));
   root.dataset.scheme = dark ? 'dark' : 'light';
+  root.dataset.skin = settings.skin;
   root.dataset.density = settings.density;
   root.style.setProperty('--accent-h', settings.accent);
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#0d0d12' : '#f4f3f0');

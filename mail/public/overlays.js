@@ -1,4 +1,4 @@
-import { h, svg, iconButton, settings, saveSettings, toast, mod, escapeHtml } from './lib.js';
+import { h, svg, iconButton, settings, saveSettings, toast, mod, escapeHtml, SKINS } from './lib.js';
 
 let current = null;
 
@@ -170,7 +170,8 @@ export function openSettings({ onChange, state }) {
   sig.addEventListener('input', () => saveSettings({ signature: sig.value }));
 
   const body = h('div.settings',
-    row('Тема', null, seg([{ value: 'light', label: 'Светлая', icon: 'sun' }, { value: 'dark', label: 'Тёмная', icon: 'moon' }, { value: 'auto', label: 'Авто', icon: 'monitor' }], settings.theme, (v) => { saveSettings({ theme: v }); onChange?.(); })),
+    row('Оформление', 'Современное или как в старом добром Outlook', seg(SKINS, settings.skin, (v) => { saveSettings({ skin: v }); onChange?.('skin'); })),
+    row('Тема', 'В классическом оформлении всегда светлая', seg([{ value: 'light', label: 'Светлая', icon: 'sun' }, { value: 'dark', label: 'Тёмная', icon: 'moon' }, { value: 'auto', label: 'Авто', icon: 'monitor' }], settings.theme, (v) => { saveSettings({ theme: v }); onChange?.(); })),
     row('Акцент', null, swatches),
     row('Плотность списка', null, seg([{ value: 'comfortable', label: 'Просторно' }, { value: 'compact', label: 'Компактно' }], settings.density, (v) => saveSettings({ density: v }))),
     row('Цепочки писем', 'Собирать ответы в одну беседу', toggle(settings.conversations, (v) => { saveSettings({ conversations: v }); onChange?.('reload'); })),
@@ -236,29 +237,40 @@ export function closeMenu() {
   if (!menuEl) return false;
   menuEl.remove();
   menuEl = null;
+  menuAnchor = null;
   return true;
 }
 
-/** items: [{ icon, label, run } | '-'] at an element or at {x, y} */
-export function showMenu(at, items) {
+let menuAnchor = null;
+
+export const menuOpenAt = () => (menuEl ? menuAnchor : null);
+
+/**
+ * items: [{ icon, label, run, checked, disabled, hint } | '-'] at an element or at {x, y}.
+ * align: 'right' (default, for toolbar buttons) or 'left' (for a menu bar).
+ */
+export function showMenu(at, items, { align = 'right' } = {}) {
   closeMenu();
   const el = h('div.menu', { role: 'menu', onkeydown: (e) => { if (e.key === 'Escape') { e.stopPropagation(); closeMenu(); } } },
-    ...items.filter(Boolean).map((it) => (it === '-' ? h('hr') : h('button', { type: 'button', role: 'menuitem', onclick: () => { closeMenu(); it.run(); } }, svg(it.icon || 'folder', 16), it.label))));
+    ...items.filter(Boolean).map((it) => (it === '-'
+      ? h('hr')
+      : h('button', { type: 'button', role: 'menuitem', disabled: Boolean(it.disabled), class: it.checked ? 'checked' : '', onclick: () => { closeMenu(); it.run(); } },
+        svg(it.checked ? 'check' : it.icon || 'folder', 16), h('span.label', it.label), it.hint ? h('span.hint', it.hint) : null))));
   document.body.append(el);
   const r = at instanceof Element ? at.getBoundingClientRect() : { left: at.x, right: at.x, top: at.y, bottom: at.y };
   const w = el.offsetWidth;
   const hgt = el.offsetHeight;
-  let x = at instanceof Element ? r.right - w : r.left;
-  let y = r.bottom + 6;
+  let x = at instanceof Element && align === 'right' ? r.right - w : r.left;
+  let y = r.bottom + (align === 'left' ? 1 : 6);
   x = Math.max(8, Math.min(x, innerWidth - w - 8));
   if (y + hgt > innerHeight - 8) y = Math.max(8, r.top - hgt - 6);
   Object.assign(el.style, { left: `${x}px`, top: `${y}px` });
   menuEl = el;
-  el.querySelector('button')?.focus();
+  menuAnchor = at instanceof Element ? at : null;
+  if (!menuAnchor) el.querySelector('button')?.focus();
   setTimeout(() => document.addEventListener('mousedown', function off(e) {
-    if (!el.contains(e.target)) {
-      closeMenu();
-      document.removeEventListener('mousedown', off);
-    }
+    // A press on the button that opened it is left to that button's own click, which toggles.
+    if (!el.contains(e.target) && !(menuAnchor && menuAnchor.contains(e.target))) closeMenu();
+    if (!el.isConnected || !menuEl) document.removeEventListener('mousedown', off);
   }), 0);
 }

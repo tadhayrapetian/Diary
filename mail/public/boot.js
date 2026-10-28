@@ -6,8 +6,10 @@
   } catch {}
   const root = document.documentElement;
   const theme = s.theme || 'auto';
-  const dark = theme === 'dark' || (theme === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+  const skin = s.skin || 'aether';
+  const dark = skin === 'aether' && (theme === 'dark' || (theme === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches));
   root.dataset.scheme = dark ? 'dark' : 'light';
+  root.dataset.skin = skin;
   root.dataset.density = s.density || 'comfortable';
   if (s.accent) root.style.setProperty('--accent-h', s.accent);
 })();

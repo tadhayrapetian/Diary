@@ -8,14 +8,17 @@
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="classic.css" />
     <script src="boot.js"></script>
     <script type="module" src="app.js"></script>
   </head>
   <body>
     <div class="app" id="app">
+      <header class="classic-bar" id="classic-bar"></header>
       <aside class="sidebar" id="sidebar"></aside>
       <section class="pane list-pane" id="list-pane"></section>
       <section class="pane reader-pane" id="reader-pane"></section>
+      <footer class="classic-status" id="classic-status"></footer>
     </div>
     <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
   </body>

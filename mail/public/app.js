@@ -1,11 +1,11 @@
 import { folderIcon } from './icons.js';
 import {
   h, svg, iconButton, api, streamPost, shortDate, longDate, dateGroup, fileSize, displayName, avatar, fileBadge,
-  settings, saveSettings, applyLook, contacts, drafts, toast, isTyping, mod, modK, plural,
+  settings, saveSettings, applyLook, contacts, drafts, toast, isTyping, mod, modK, plural, isClassic, SKINS,
 } from './lib.js';
 import { renderBody } from './frame.js';
 import { Composer, replyRecipients } from './compose.js';
-import { openPalette, openSettings, openShortcuts, closeOverlay, overlayOpen, showMenu, closeMenu } from './overlays.js';
+import { openPalette, openSettings, openShortcuts, closeOverlay, overlayOpen, showMenu, closeMenu, menuOpenAt } from './overlays.js';
 
 // ───────────────────────────────────────────── state
 
@@ -37,6 +37,8 @@ const el = {
   sidebar: document.getElementById('sidebar'),
   list: document.getElementById('list-pane'),
   reader: document.getElementById('reader-pane'),
+  bar: document.getElementById('classic-bar'),
+  status: document.getElementById('classic-status'),
 };
 
 const folderById = (id) => state.folders.find((f) => f.id === id);
@@ -471,19 +473,32 @@ function renderSidebar() {
     }, svg(folderIcon(f), 18), h('span.name', f.name), count ? h('span.count', { class: hot ? 'hot' : '' }, count > 999 ? '999+' : count) : null);
   };
 
+  const module = (icon, label, active) =>
+    h('button.module', { type: 'button', class: active ? 'on' : '', onclick: () => (active ? null : toast(`${label} — в этой версии только почта`, { icon })) }, svg(icon, 18), h('span', label));
+
   el.sidebar.classList.toggle('open', state.sidebarOpen);
   el.sidebar.replaceChildren(
+    h('div.pane-title.classic-only', 'Почта'),
     h('div.brand', h('div.brand-mark', svg('sparkles', 16)), h('span.brand-name', 'Aether'), state.mode === 'demo' ? h('span.brand-mode', 'демо') : null),
     h('button.compose-btn', { type: 'button', onclick: () => compose() }, svg('compose', 18), h('span', 'Написать'), h('kbd', 'C')),
     h('nav.nav', { 'aria-label': 'Папки' },
+      h('div.nav-label.classic-only', 'Все почтовые папки'),
+      h('div.tree-root.classic-only', svg('mail', 16), state.mode === 'demo' ? 'Личные папки (демо)' : state.me.address || 'Личные папки'),
       ...roles.map(item),
       others.length ? h('div.nav-label', 'Папки') : null,
       ...others.map(item)),
     h('div.side-foot',
       avatar(state.me, 'sm'),
       h('div.who', h('b', state.me.name || 'Моя почта'), h('span', state.me.address)),
+      iconButton('palette', 'Оформление', (e) => skinMenu(e.currentTarget)),
       iconButton('command', `Команды  ${modK}`, palette),
-      iconButton('settings', 'Настройки', settingsSheet)));
+      iconButton('settings', 'Настройки', settingsSheet)),
+    h('div.modules.classic-only', module('mail', 'Почта', true), module('calendar', 'Календарь'), module('users', 'Контакты'), module('tasks', 'Задачи')));
+  renderClassic();
+}
+
+function skinMenu(anchor) {
+  showMenu(anchor, SKINS.map((k) => ({ label: k.label, icon: 'palette', checked: settings.skin === k.value, run: () => saveSettings({ skin: k.value }) })));
 }
 
 // ───────────────────────────────────────────── list
@@ -555,7 +570,9 @@ function listHead() {
       iconButton('x', 'Снять выделение', () => { state.selection.clear(); renderList(); }));
   }
   const fab = h('button.fab.mobile-only', { type: 'button', 'aria-label': 'Написать', onclick: () => compose() }, svg('compose', 24));
-  return h('div.list-head', wrap, title, bulk || chips, fab);
+  const filterNames = { all: '', unread: ' · только непрочитанные', flagged: ' · с пометкой', attachments: ' · с вложениями' };
+  const arranged = h('div.arranged.classic-only', h('span', `Упорядочено: Дата${filterNames[state.filter] || ''}`), h('span', 'Сначала новые'));
+  return h('div.list-head', wrap, title, bulk || chips, arranged, fab);
 }
 
 function rowNode(r) {
@@ -610,6 +627,11 @@ function rowNode(r) {
     },
   },
     unread ? h('i.dot') : null,
+    h('span.env.classic-only', { 'aria-hidden': 'true' }, svg(unread ? 'mail' : 'mailOpen', 16)),
+    h('button.flag.classic-only', {
+      type: 'button', class: flagged ? 'on' : '', 'aria-label': flagged ? 'Снять пометку' : 'Пометить',
+      onclick: (e) => { e.stopPropagation(); setFlag(flagged ? r.items : [r.latest], 'flagged', !flagged); },
+    }, svg('flag', 14)),
     avatarEl,
     h('div.row-main',
       h('div.row-top', who, h('span.marks', attach ? svg('clip', 13) : null, flagged ? h('span.starred', svg('star', 13)) : null), h('time', { datetime: m.date, title: longDate(m.date) }, shortDate(m.date))),
@@ -713,6 +735,7 @@ function renderList() {
     const local = isDrafts ? draftRows() : [];
     if (!all.length && !local.length) {
       el.list.replaceChildren(head, emptyList());
+      renderClassic();
       return;
     }
     if (local.length) list.append(h('div.group', 'На этом устройстве'), ...local);
@@ -742,6 +765,7 @@ function renderList() {
   const caret = focused ? document.activeElement.selectionStart : null;
   el.list.replaceChildren(head, list);
   list.scrollTop = scroll;
+  renderClassic();
   if (focused) {
     const s = document.getElementById('search');
     s.focus();
@@ -853,6 +877,7 @@ function renderReader({ keepScroll = false } = {}) {
       h('h2', 'Выберите письмо'),
       h('p', 'Или напишите новое — оно уже ждёт.'),
       h('div.hint', h('span', h('kbd', 'j'), h('kbd', 'k'), 'листать'), h('span', h('kbd', 'c'), 'написать'), h('span', h('kbd', mod), h('kbd', 'K'), 'команды'), h('span', h('kbd', '?'), 'все клавиши'))));
+    renderClassic();
     return;
   }
 
@@ -905,6 +930,152 @@ function renderReader({ keepScroll = false } = {}) {
 
   el.reader.replaceChildren(readerBar(row), body);
   body.scrollTop = scroll;
+  renderClassic();
+}
+
+
+// ───────────────────────────────────────────── classic skins (Outlook 2003 / 2007)
+
+/** A menu bar and a toolbar with captions, as Outlook had before the ribbon. */
+function renderClassic() {
+  if (!isClassic()) {
+    if (el.bar.childElementCount) {
+      el.bar.replaceChildren();
+      el.status.replaceChildren();
+    }
+    return;
+  }
+  const open = state.open && !state.open.loading && !state.open.error;
+  const any = Boolean(open || state.selection.size);
+  const f = currentFolder();
+  const flagged = targetRows().some(rowFlagged);
+
+  const menus = {
+    'Файл': () => [
+      { icon: 'compose', label: 'Создать сообщение', hint: 'C', run: () => compose() },
+      '-',
+      ...SKINS.map((k) => ({ label: `Оформление: ${k.label}`, icon: 'palette', checked: settings.skin === k.value, run: () => saveSettings({ skin: k.value }) })),
+      '-',
+      { icon: 'settings', label: 'Параметры…', hint: ',', run: settingsSheet },
+    ],
+    'Правка': () => [
+      { icon: 'check', label: 'Выделить всё', hint: `${mod}+A`, run: () => { state.selection = new Set(rows().map((r) => r.key)); renderList(); } },
+      '-',
+      { icon: 'mailOpen', label: 'Отметить как прочитанное / непрочитанное', hint: 'U', disabled: !any, run: toggleRead },
+      { icon: 'check', label: 'Отметить все как прочитанные', run: markAllRead },
+      '-',
+      { icon: 'folder', label: 'Переместить в папку…', disabled: !any, run: () => moveMenu(el.bar.querySelector('[data-act="move"]')) },
+      { icon: 'trash', label: 'Удалить', hint: '#', disabled: !any, run: trash },
+    ],
+    'Вид': () => [
+      { icon: 'list', label: 'Все сообщения', checked: state.filter === 'all', run: () => setFilter('all') },
+      { icon: 'mail', label: 'Непрочитанные сообщения', checked: state.filter === 'unread', run: () => setFilter('unread') },
+      { icon: 'flag', label: 'Сообщения с пометкой', checked: state.filter === 'flagged', run: () => setFilter('flagged') },
+      { icon: 'clip', label: 'Сообщения с вложениями', checked: state.filter === 'attachments', run: () => setFilter('attachments') },
+      '-',
+      { icon: 'layers', label: 'Упорядочить по беседам', checked: settings.conversations, run: () => { saveSettings({ conversations: !settings.conversations }); closeReader(); renderList(); } },
+      { icon: 'list', label: 'Компактный список', checked: settings.density === 'compact', run: () => saveSettings({ density: settings.density === 'compact' ? 'comfortable' : 'compact' }) },
+      '-',
+      ...SKINS.map((k) => ({ label: k.label, icon: 'palette', checked: settings.skin === k.value, run: () => saveSettings({ skin: k.value }) })),
+    ],
+    'Перейти': () => state.folders.map((x) => ({ icon: folderIcon(x), label: x.name, checked: x.id === state.folder, run: () => goFolder(x.id) })),
+    'Сервис': () => [
+      { icon: 'refresh', label: 'Отправить и получить', hint: 'Shift+R', run: sendReceive },
+      { icon: 'search', label: 'Найти', hint: '/', run: () => document.getElementById('search')?.focus() },
+      { icon: 'command', label: 'Палитра команд', hint: modK, run: palette },
+      '-',
+      { icon: 'settings', label: 'Параметры…', hint: ',', run: settingsSheet },
+    ],
+    'Действия': () => [
+      { icon: 'compose', label: 'Создать сообщение', hint: 'C', run: () => compose() },
+      '-',
+      { icon: 'reply', label: 'Ответить', hint: 'R', disabled: !open, run: () => replyTo('reply') },
+      { icon: 'replyAll', label: 'Ответить всем', hint: 'A', disabled: !open, run: () => replyTo('replyAll') },
+      { icon: 'forward', label: 'Переслать', hint: 'F', disabled: !open, run: () => replyTo('forward', state.open.thread.at(-1)) },
+      '-',
+      { icon: 'flag', label: flagged ? 'Снять пометку' : 'К исполнению (пометить)', hint: 'S', disabled: !any, run: toggleStar },
+      { icon: 'spam', label: f.role === 'junk' ? 'Не является нежелательной' : 'Нежелательная почта', hint: '!', disabled: !any, run: spam },
+      state.ai ? '-' : null,
+      state.ai ? { icon: 'sparkles', label: 'Кратко от Claude', hint: '.', disabled: !open, run: summarize } : null,
+    ],
+    'Справка': () => [
+      { icon: 'keyboard', label: 'Сочетания клавиш', hint: '?', run: openShortcuts },
+      { icon: 'sparkles', label: 'О программе Aether', run: () => toast('Aether — ваша почта. Классический вид в честь Outlook 2003–2007.', { icon: 'sparkles', duration: 5000 }) },
+    ],
+  };
+
+  const openMenu = (btn, name) => {
+    if (menuOpenAt() === btn) return closeMenu();
+    showMenu(btn, menus[name](), { align: 'left' });
+    btn.classList.add('open');
+    const watch = setInterval(() => {
+      if (menuOpenAt() !== btn) {
+        btn.classList.remove('open');
+        clearInterval(watch);
+      }
+    }, 120);
+  };
+  const menubar = h('nav.menubar', { 'aria-label': 'Меню' }, ...Object.keys(menus).map((name) => {
+    const btn = h('button', {
+      type: 'button',
+      onclick: () => openMenu(btn, name),
+      // as in Windows: once one menu is open, sliding along the bar opens the others
+      onmouseenter: () => { if (menuOpenAt() && menuOpenAt() !== btn && menuOpenAt().closest?.('.menubar')) openMenu(btn, name); },
+    }, name);
+    return btn;
+  }));
+
+  const tool = (icon, label, run, { disabled = false, act, tip } = {}) =>
+    h('button.tool', { type: 'button', disabled, title: tip || label, dataset: act ? { act } : undefined, onclick: (e) => run(e) }, svg(icon, 16), label ? h('span', label) : null);
+  const sep = () => h('i.tsep');
+  const help = h('input.helpbox', {
+    type: 'text', placeholder: 'Введите вопрос', 'aria-label': 'Справка',
+    onfocus: (e) => { e.target.blur(); palette(); },
+  });
+
+  const toolbar = h('div.toolbar',
+    tool('compose', 'Создать', () => compose(), { tip: 'Создать сообщение (C)' }),
+    sep(),
+    tool('printer', '', () => (open ? window.print() : null), { disabled: !open, tip: 'Печать' }),
+    tool('folder', '', (e) => moveMenu(e.currentTarget), { disabled: !any, act: 'move', tip: 'Переместить в папку' }),
+    tool('trash', '', trash, { disabled: !any, tip: 'Удалить (#)' }),
+    sep(),
+    tool('reply', 'Ответить', () => replyTo('reply'), { disabled: !open }),
+    tool('replyAll', 'Ответить всем', () => replyTo('replyAll'), { disabled: !open }),
+    tool('forward', 'Переслать', () => replyTo('forward', state.open.thread.at(-1)), { disabled: !open }),
+    sep(),
+    tool('refresh', 'Отправить и получить', sendReceive),
+    sep(),
+    tool('search', 'Найти', () => document.getElementById('search')?.focus()),
+    tool('flag', '', toggleStar, { disabled: !any, tip: 'К исполнению (S)' }),
+    state.ai ? tool('sparkles', 'Кратко', summarize, { disabled: !open, tip: 'Кратко от Claude (.)' }) : null,
+    h('span.grow'),
+    help);
+
+  el.bar.replaceChildren(menubar, toolbar);
+
+  const unread = f.unread || 0;
+  const count = state.query || state.filter !== 'all' ? state.total ?? state.items.length : f.total ?? state.items.length;
+  el.status.replaceChildren(...[
+    h('span', `Элементов: ${count ?? 0}`),
+    unread ? h('span', `Не прочитано: ${unread}`) : null,
+    state.selection.size ? h('span', `Выделено: ${state.selection.size}`) : null,
+    h('span.grow'),
+    h('span', state.loading ? 'Получение сообщений…' : 'Все папки обновлены.'),
+    h('span', state.mode === 'demo' ? 'Демо-режим' : `Подключено: ${state.me.address}`),
+  ].filter(Boolean));
+}
+
+function setFilter(value) {
+  state.filter = value;
+  state.selection.clear();
+  loadList();
+}
+
+function sendReceive() {
+  loadList({ quiet: true });
+  loadFolders();
+  toast('Отправка и получение завершены', { icon: 'refresh', duration: 1800 });
 }
 
 // ───────────────────────────────────────────── palette & settings
@@ -933,6 +1104,7 @@ function palette() {
   add('Вид', 'Тема как в системе', 'monitor', () => saveSettings({ theme: 'auto' }), null, 'auto theme');
   add('Вид', settings.density === 'compact' ? 'Просторный список' : 'Компактный список', 'list', () => { saveSettings({ density: settings.density === 'compact' ? 'comfortable' : 'compact' }); }, null, 'density плотность');
   add('Вид', settings.conversations ? 'Показывать письма по одному' : 'Собирать в беседы', 'layers', () => { saveSettings({ conversations: !settings.conversations }); renderList(); closeReader(); }, null, 'threads цепочки беседы conversation');
+  for (const k of SKINS) add('Вид', `Оформление: ${k.label}`, 'palette', () => saveSettings({ skin: k.value }), null, 'skin design дизайн оформление outlook классика classic');
   add('Прочее', 'Настройки', 'settings', settingsSheet, [','], 'settings preferences подпись signature');
   add('Прочее', 'Горячие клавиши', 'keyboard', openShortcuts, ['?'], 'keyboard shortcuts help');
   openPalette(cmds, {
@@ -1038,11 +1210,7 @@ document.addEventListener('keydown', (e) => {
     '.': summarize,
     ',': settingsSheet,
     '?': openShortcuts,
-    R: () => {
-      loadList({ quiet: true });
-      loadFolders();
-      toast('Обновлено', { icon: 'refresh', duration: 1500 });
-    },
+    R: sendReceive,
   };
   const fn = actions[e.key];
   if (fn) {
@@ -1097,7 +1265,16 @@ window.addEventListener('focus', () => {
 // ───────────────────────────────────────────── start
 
 // Mail frames bake the theme in when they render, so redraw them when it changes.
+let lastSkin = settings.skin;
 window.addEventListener('aether:look', () => {
+  if (settings.skin !== lastSkin) {
+    lastSkin = settings.skin;
+    renderSidebar();
+    renderList();
+    renderReader({ keepScroll: true });
+    return;
+  }
+  renderClassic();
   if (state.open && !state.open.loading) renderReader({ keepScroll: true });
 });
 
