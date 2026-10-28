@@ -255,10 +255,6 @@
   color: #d01d1d;
   fill: #ff5a4a;
 }
-[data-skin^='outlook'] .tool .i-sparkles {
-  color: #b5168f;
-  fill: #ffd1f3;
-}
 [data-skin^='outlook'] .module .i-calendar {
   color: #1f5fbf;
   fill: #fff;
@@ -827,34 +823,7 @@
   background: none;
 }
 
-[data-skin^='outlook'] .ai-card {
-  margin: 8px 12px;
-  border-radius: 0;
-  background: #ffffe1;
-  border: 1px solid #aca899;
-  box-shadow: none;
-  font-size: var(--o-size);
-  animation: none;
-  padding: 6px 30px 6px 34px;
-}
-[data-skin^='outlook'] .ai-card > .ic {
-  left: 10px;
-  top: 8px;
-  color: #b5168f;
-}
-[data-skin^='outlook'] .ai-card .ai-title {
-  font-size: var(--o-size);
-  letter-spacing: 0;
-  text-transform: none;
-  color: #000;
-}
-[data-skin^='outlook'] .ai-card .close {
-  width: 20px;
-  height: 20px;
-  top: 3px;
-  right: 3px;
-  border-radius: 0;
-}
+
 
 [data-skin^='outlook'] .att {
   border-radius: 0;
@@ -903,12 +872,8 @@
   box-shadow: inset 0 0 0 2px #f8b636;
   border-color: #003c74;
 }
-[data-skin^='outlook'] .quick button.magic {
-  color: #000;
-  background: linear-gradient(180deg, #fff 0%, #f0f0ea 60%, #d6d0c5 100%);
-}
-[data-skin='outlook2007'] .quick button,
-[data-skin='outlook2007'] .quick button.magic {
+
+[data-skin='outlook2007'] .quick button {
   border-color: #8db2e3;
   background: linear-gradient(180deg, #f6faff 0%, #e2eefc 49%, #d0e3fb 50%, #e6f0fd 100%);
 }
@@ -1164,22 +1129,7 @@
   font-size: var(--o-size);
   animation: none;
 }
-[data-skin^='outlook'] .ai-prompt {
-  margin: 6px 8px 0;
-  border-radius: 0;
-  border: 1px solid #aca899;
-  background: #ffffe1;
-  animation: none;
-}
-[data-skin^='outlook'] .ai-prompt button {
-  border-radius: 3px;
-  font-size: var(--o-size);
-  font-weight: 400;
-  color: #000;
-  height: 22px;
-  border: 1px solid #003c74;
-  background: linear-gradient(180deg, #fff 0%, #f0f0ea 60%, #d6d0c5 100%);
-}
+
 [data-skin^='outlook'] .c-foot {
   order: -1;
   padding: 3px 6px;

@@ -62,40 +62,6 @@ export async function api(path, body) {
   return data;
 }
 
-/** POST that answers with server-sent events; calls onEvent(name, data). */
-export async function streamPost(path, body, onEvent, signal) {
-  const res = await fetch(path, {
-    method: 'POST',
-    headers: { ...HEADERS, 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-    signal,
-  });
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.error || `Ошибка ${res.status}`);
-  }
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = '';
-  for (;;) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    let cut;
-    while ((cut = buffer.indexOf('\n\n')) >= 0) {
-      const chunk = buffer.slice(0, cut);
-      buffer = buffer.slice(cut + 2);
-      let event = 'message';
-      let data = '';
-      for (const line of chunk.split('\n')) {
-        if (line.startsWith('event:')) event = line.slice(6).trim();
-        else if (line.startsWith('data:')) data += line.slice(5).trim();
-      }
-      if (data) onEvent(event, JSON.parse(data));
-    }
-  }
-}
-
 // ───────────────────────────────────────────── formatting
 
 const DAY = 86_400_000;

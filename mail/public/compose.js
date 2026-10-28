@@ -1,6 +1,6 @@
 import {
   h, svg, iconButton, avatar, escapeHtml, contacts, drafts, settings, toast,
-  fileSize, fileToBase64, longDate, streamPost, mod,
+  fileSize, fileToBase64, longDate, mod,
 } from './lib.js';
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -170,7 +170,7 @@ let open = [];
 
 export class Composer {
   /**
-   * opts: { mode: 'new'|'reply'|'replyAll'|'forward', source, me, prefill, draft, ai, onSend }
+   * opts: { mode: 'new'|'reply'|'replyAll'|'forward', source, me, prefill, draft, onSend }
    */
   constructor(opts) {
     this.opts = opts;
@@ -181,7 +181,6 @@ export class Composer {
     if (open.length > 2) open[0].close({ keepDraft: true });
     document.body.append(this.el);
     (this.to.people.length ? this.editor : this.to).focus();
-    if (opts.ai) this.toggleAi(true, opts.ai === 'auto');
   }
 
   static openFor(key) {
@@ -244,7 +243,6 @@ export class Composer {
     this.titleEl = h('b');
     this.savedEl = h('span.saved');
     this.attsEl = h('div.c-atts');
-    this.aiBar = h('div.ai-prompt', { hidden: true });
     this.fileInput = h('input', { type: 'file', multiple: true, hidden: true, onchange: () => { this.addFiles([...this.fileInput.files]); this.fileInput.value = ''; } });
 
     const fmt = (cmd, icon, tip) => iconButton(icon, tip, (e) => { e.preventDefault(); this.editor.focus(); document.execCommand(cmd); }, { onmousedown: (e) => e.preventDefault() });
@@ -263,11 +261,9 @@ export class Composer {
       h('div.c-fields', this.to.el, this.cc.el, this.bcc.el, h('div.field', h('label', 'Тема'), this.subject)),
       h('div.c-body', { onclick: (e) => { if (e.target === e.currentTarget) this.editor.focus(); } }, this.editor),
       this.attsEl,
-      this.aiBar,
       h('div.c-foot',
         h('button.send-btn', { type: 'button', onclick: () => this.send() }, svg('send', 16), 'Отправить', h('kbd', `${mod}↵`)),
         iconButton('clip', 'Прикрепить файл', () => this.fileInput.click()),
-        this.opts.aiEnabled ? iconButton('sparkles', 'Написать с Claude', () => this.toggleAi()) : null,
         h('div.fmt', fmt('bold', 'bold', 'Жирный'), fmt('italic', 'italic', 'Курсив'), fmt('underline', 'underline', 'Подчёркнутый'), fmt('insertUnorderedList', 'list', 'Список'),
           iconButton('link', 'Ссылка', (e) => { e.preventDefault(); this.#link(); }, { onmousedown: (e) => e.preventDefault() })),
         h('div.grow'),
@@ -289,8 +285,7 @@ export class Composer {
     } else if (e.key === 'Escape') {
       e.preventDefault();
       e.stopPropagation();
-      if (!this.aiBar.hidden) this.toggleAi(false);
-      else this.close({ keepDraft: true });
+      this.close({ keepDraft: true });
     } else if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'a') {
       e.preventDefault();
       this.fileInput.click();
@@ -401,8 +396,6 @@ export class Composer {
         iconButton('x', 'Убрать', () => { this.attachments = this.attachments.filter((x) => x !== a); this.#renderAtts(); this.#dirty(); }, { style: { width: '26px', height: '26px' } }))));
   }
 
-  // ─────────── the assistant
-
   /** Nodes before the signature / quote are what the person is writing. */
   #leadNodes() {
     const out = [];
@@ -415,86 +408,6 @@ export class Composer {
 
   leadText() {
     return this.#leadNodes().map((n) => n.textContent).join('\n').replace(/ /g, ' ');
-  }
-
-  #setLead(text) {
-    const nodes = this.#leadNodes();
-    const anchor = nodes.length ? nodes[nodes.length - 1].nextSibling : this.editor.firstChild;
-    nodes.forEach((n) => n.remove());
-    const frag = document.createDocumentFragment();
-    const paras = text.replace(/\r/g, '').split('\n');
-    for (const line of paras) frag.append(h('div', line ? line : h('br')));
-    this.editor.insertBefore(frag, anchor);
-  }
-
-  toggleAi(force, auto = false) {
-    const show = force ?? this.aiBar.hidden;
-    this.aiBar.hidden = !show;
-    if (!show) return this.editor.focus();
-    const isReply = this.opts.source && this.opts.mode !== 'forward';
-    const input = h('input', {
-      type: 'text',
-      placeholder: isReply ? 'Что ответить? Например: «вежливо отказаться, предложить вторник»' : 'О чём письмо? Например: «попросить счёт за октябрь»',
-      onkeydown: (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          this.#runAi(isReply ? 'reply' : 'write', input.value);
-        }
-        if (e.key === 'Escape') {
-          e.preventDefault();
-          e.stopPropagation();
-          this.toggleAi(false);
-        }
-      },
-    });
-    this.aiBar.replaceChildren(svg('sparkles', 18), input,
-      this.leadText().trim() ? h('button', { type: 'button', onclick: () => this.#runAi('polish', input.value) }, 'Улучшить') : null,
-      h('button.go', { type: 'button', onclick: () => this.#runAi(isReply ? 'reply' : 'write', input.value) }, isReply ? 'Ответить' : 'Написать'));
-    input.focus();
-    if (auto) this.#runAi('reply', '');
-  }
-
-  async #runAi(action, instruction) {
-    if (this.aiAbort) this.aiAbort.abort();
-    const controller = new AbortController();
-    this.aiAbort = controller;
-    const s = this.opts.source;
-    const body = { action, instruction, subject: this.subject.value, draft: action === 'polish' ? this.leadText() : '' };
-    if (s && action === 'reply') Object.assign(body, { folder: s.folder, id: s.id });
-    if (action === 'write' && this.leadText().trim()) body.draft = this.leadText();
-
-    const before = this.leadText();
-    let text = '';
-    this.editor.classList.add('streaming');
-    this.aiBar.querySelectorAll('button').forEach((b) => (b.disabled = true));
-    const go = this.aiBar.querySelector('.go');
-    if (go) go.textContent = 'Пишу…';
-    try {
-      await streamPost('/api/ai', body, (event, data) => {
-        if (event === 'text') {
-          text += data.text;
-          this.#setLead(text.replace(/^\s+/, ''));
-        } else if (event === 'error') {
-          throw new Error(data.error);
-        }
-      }, controller.signal);
-      this.aiBar.hidden = true;
-      this.#dirty();
-      toast('Черновик готов — поправьте, если нужно', {
-        icon: 'sparkles',
-        action: 'Вернуть как было',
-        onAction: () => this.#setLead(before),
-      });
-    } catch (err) {
-      if (controller.signal.aborted) return;
-      if (!text) this.#setLead(before);
-      toast(err.message || 'Ассистент недоступен', { error: true });
-    } finally {
-      this.editor.classList.remove('streaming');
-      this.aiBar.querySelectorAll('button').forEach((b) => (b.disabled = false));
-      if (go) go.textContent = action === 'reply' ? 'Ответить' : 'Написать';
-      this.editor.focus();
-    }
   }
 
   // ─────────── window
@@ -522,7 +435,6 @@ export class Composer {
 
   close({ keepDraft = false } = {}) {
     clearTimeout(this.saveTimer);
-    this.aiAbort?.abort();
     if (keepDraft && !this.isEmpty()) {
       this.saveDraft();
       toast('Черновик сохранён', { icon: 'draft' });

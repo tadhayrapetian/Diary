@@ -5,9 +5,8 @@ import { extname, join, normalize, sep } from 'node:path';
 import { loadEnv, root } from './env.js';
 import { DemoStore } from './demo.js';
 import { ImapStore } from './imap.js';
-import { Assistant } from './ai.js';
 import { parseRecipients, textToHtml, htmlToText } from './util.js';
-import { accountFromEnv, yes } from './config.js';
+import { accountFromEnv } from './config.js';
 
 loadEnv();
 
@@ -21,9 +20,6 @@ const BODY_LIMIT = 40 * 1024 * 1024;
 const account = accountFromEnv();
 const store = account ? new ImapStore(account) : new DemoStore();
 if (store.kind === 'imap') store.watch();
-
-const HAS_KEY = Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN);
-const assistant = HAS_KEY && !yes(process.env.AETHER_NO_AI) ? new Assistant({ model: process.env.AETHER_MODEL || 'claude-opus-5-5' }) : null;
 
 // ---------------------------------------------------------------- live updates
 
@@ -168,7 +164,6 @@ const routes = {
   'GET /api/state': async () => ({
     mode: store.kind,
     account: await store.info(),
-    ai: Boolean(assistant),
   }),
 
   'GET /api/folders': () => store.folders(),
@@ -249,41 +244,6 @@ async function events(req, res) {
   req.on('close', () => listeners.delete(res));
 }
 
-async function ai(req, res) {
-  if (!assistant) return json(res, 501, { error: 'ИИ выключен: добавьте ANTHROPIC_API_KEY в .env' });
-  const body = await readBody(req);
-  const controller = new AbortController();
-  res.on('close', () => controller.abort());
-
-  let thread = [];
-  if (body.folder && body.id) {
-    thread = await store.thread(String(body.folder), String(body.id)).catch(() => []);
-  }
-  openStream(res);
-  try {
-    const { refused } = await assistant.run(
-      {
-        action: String(body.action),
-        instruction: String(body.instruction || ''),
-        thread,
-        draft: String(body.draft || ''),
-        subject: String(body.subject || ''),
-      },
-      (text) => send(res, 'text', { text }),
-      controller.signal,
-    );
-    if (refused) send(res, 'error', { error: 'Ассистент не стал с этим помогать.' });
-    send(res, 'done', {});
-  } catch (error) {
-    if (!controller.signal.aborted) {
-      console.error('[mail] assistant:', error?.message || error);
-      send(res, 'error', { error: 'Ассистент сейчас недоступен. Попробуйте ещё раз.' });
-    }
-  } finally {
-    res.end();
-  }
-}
-
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://localhost');
   if (!url.pathname.startsWith('/api/')) {
@@ -295,7 +255,6 @@ const server = http.createServer(async (req, res) => {
   try {
     if (req.method === 'GET' && url.pathname === '/api/events') return await events(req, res);
     if (req.method === 'GET' && url.pathname === '/api/attachment') return await attachment(req, res, url);
-    if (req.method === 'POST' && url.pathname === '/api/ai') return await ai(req, res);
 
     const route = routes[`${req.method} ${url.pathname}`];
     if (!route) return json(res, 404, { error: 'not found' });
@@ -319,6 +278,6 @@ server.listen(PORT, HOST, () => {
   } else {
     console.log(`  Ящик: ${account.from.address} (${account.imap.host})`);
   }
-  console.log(assistant ? '  Ассистент Claude включён.\n' : '  Ассистент выключен — нужен ANTHROPIC_API_KEY.\n');
+  console.log('');
 });
 

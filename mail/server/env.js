@@ -7,7 +7,7 @@ export const root = join(here, '..');
 
 /**
  * Minimal .env reader. Values already present in the real environment win, so
- * `ANTHROPIC_API_KEY=… npm start` overrides the file without editing it.
+ * `PORT=5000 npm start` overrides the file without editing it.
  */
 export function loadEnv(file = join(root, '.env')) {
   let raw;

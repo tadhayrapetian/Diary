@@ -1,6 +1,6 @@
 import { folderIcon } from './icons.js';
 import {
-  h, svg, iconButton, api, streamPost, shortDate, longDate, dateGroup, fileSize, displayName, avatar, fileBadge,
+  h, svg, iconButton, api, shortDate, longDate, dateGroup, fileSize, displayName, avatar, fileBadge,
   settings, saveSettings, applyLook, contacts, drafts, toast, isTyping, mod, modK, plural, isClassic, SKINS,
 } from './lib.js';
 import { renderBody } from './frame.js';
@@ -12,7 +12,6 @@ import { openPalette, openSettings, openShortcuts, closeOverlay, overlayOpen, sh
 const state = {
   mode: 'demo',
   me: { name: '', address: '' },
-  ai: false,
   folders: [],
   folder: null, // folder id
   query: '',
@@ -25,7 +24,6 @@ const state = {
   cursor: null, // row key under the keyboard
   selection: new Set(), // row keys
   open: null, // { key, thread: [full], loading }
-  summary: null, // { key, text, loading }
   allowRemote: new Set(),
   toggled: new Map(), // message key → expanded, when the reader overrides the default
   lastLoad: 0,
@@ -172,7 +170,6 @@ function goFolder(id, { keepQuery = false } = {}) {
 async function openRow(row, { focusReader = false } = {}) {
   if (!row) return;
   state.cursor = row.key;
-  state.summary = state.summary?.key === row.key ? state.summary : null;
   state.open = { key: row.key, thread: [], loading: true };
   state.toggled = new Map();
   el.app.classList.add('reading');
@@ -203,7 +200,6 @@ async function openRow(row, { focusReader = false } = {}) {
 
 function closeReader() {
   state.open = null;
-  state.summary = null;
   el.app.classList.remove('reading');
   renderReader();
 }
@@ -365,7 +361,6 @@ function markAllRead() {
 function compose(opts = {}) {
   return new Composer({
     me: state.me,
-    aiEnabled: state.ai,
     onSend: sendMail,
     onDraft: () => {
       if (currentFolder().role === 'drafts') renderList();
@@ -375,11 +370,11 @@ function compose(opts = {}) {
   });
 }
 
-function replyTo(mode, message, ai) {
+function replyTo(mode, message) {
   const thread = state.open?.thread || [];
   const source = message || [...thread].reverse().find((m) => !isMine(m.from)) || thread[thread.length - 1];
   if (!source) return;
-  compose({ mode, source, ai });
+  compose({ mode, source });
 }
 
 function sendMail(mail, composer) {
@@ -417,35 +412,6 @@ function sendMail(mail, composer) {
       if (!undone) deliver();
     },
   });
-}
-
-// ───────────────────────────────────────────── assistant
-
-async function summarize() {
-  if (!state.ai) return toast('Ассистент выключен: добавьте ANTHROPIC_API_KEY в .env', { icon: 'sparkles' });
-  const open = state.open;
-  if (!open || open.loading || !open.thread.length) return;
-  if (state.summary?.key === open.key && !state.summary.error) {
-    state.summary = null;
-    return renderReader();
-  }
-  const latest = open.thread[open.thread.length - 1];
-  state.summary = { key: open.key, text: '', loading: true };
-  renderReader();
-  try {
-    await streamPost('/api/ai', { action: 'summarize', folder: latest.folder, id: latest.id }, (event, data) => {
-      if (state.summary?.key !== open.key) return;
-      if (event === 'text') {
-        state.summary.text += data.text;
-        const body = el.reader.querySelector('.ai-body');
-        if (body) body.textContent = state.summary.text.trimStart();
-      } else if (event === 'error') throw new Error(data.error);
-    });
-    if (state.summary?.key === open.key) state.summary.loading = false;
-  } catch (err) {
-    if (state.summary?.key === open.key) state.summary = { key: open.key, text: err.message, loading: false, error: true };
-  }
-  renderReader();
 }
 
 // ───────────────────────────────────────────── sidebar
@@ -822,7 +788,6 @@ function messageCard(m, { collapsed }) {
       iconButton('more', 'Ещё', (e) => showMenu(e.currentTarget, [
         { icon: 'replyAll', label: 'Ответить всем', run: () => replyTo('replyAll', m) },
         { icon: 'forward', label: 'Переслать', run: () => replyTo('forward', m) },
-        state.ai ? { icon: 'sparkles', label: 'Ответ с Claude', run: () => compose({ mode: 'reply', source: m, ai: 'auto' }) } : null,
         '-',
         { icon: 'mail', label: 'Отметить непрочитанным', run: () => { setFlag([m, ...state.items.filter((x) => x.id === m.id && x.folder === m.folder)], 'seen', false); closeReader(); } },
         !settings.trusted.includes(m.from.address) ? { icon: 'image', label: 'Всегда показывать картинки от отправителя', run: () => { saveSettings({ trusted: [...settings.trusted, m.from.address] }); renderReader({ keepScroll: true }); } } : null,
@@ -859,7 +824,6 @@ function readerBar(row) {
     iconButton('star', 'Избранное (s)', toggleStar, { disabled: !has, class: flagged ? 'star-on' : '' }),
     iconButton('folder', 'Переместить', (e) => moveMenu(e.currentTarget), { disabled: !has }),
     h('span.grow'),
-    state.ai ? iconButton('sparkles', 'Кратко от Claude (.)', summarize, { disabled: !has || open?.loading, class: state.summary?.key === open?.key ? 'on' : '' }) : null,
     iconButton('reply', 'Ответить (r)', () => replyTo('reply'), { disabled: !has || open?.loading }),
     iconButton('replyAll', 'Ответить всем (a)', () => replyTo('replyAll'), { disabled: !has || open?.loading }),
     iconButton('forward', 'Переслать (f)', () => replyTo('forward', thread.at(-1)), { disabled: !has || open?.loading }));
@@ -905,13 +869,6 @@ function renderReader({ keepScroll = false } = {}) {
         atts ? h('span.tag', svg('clip', 13), `${atts} ${plural(atts, 'вложение', 'вложения', 'вложений')}`) : null,
         thread.some((m) => m.flagged) ? h('span.tag', { style: { color: '#c98400' } }, svg('star', 13), 'избранное') : null));
 
-    if (state.summary?.key === open.key) {
-      const s = state.summary;
-      inner.append(h('div.ai-card', { class: s.loading ? 'loading' : '' }, svg('sparkles', 18),
-        h('div.ai-title', s.error ? 'Не получилось' : 'Кратко'),
-        h('div.ai-body', s.text.trimStart()),
-        iconButton('x', 'Скрыть', () => { state.summary = null; renderReader({ keepScroll: true }); }, { class: 'close' })));
-    }
 
     thread.forEach((m, i) => {
       const k = `${m.folder}:${m.id}`;
@@ -924,8 +881,7 @@ function renderReader({ keepScroll = false } = {}) {
     inner.append(h('div.quick',
       h('button', { type: 'button', onclick: () => replyTo('reply') }, svg('reply', 16), 'Ответить'),
       others.size > 1 ? h('button', { type: 'button', onclick: () => replyTo('replyAll') }, svg('replyAll', 16), 'Ответить всем') : null,
-      h('button', { type: 'button', onclick: () => replyTo('forward', latest) }, svg('forward', 16), 'Переслать'),
-      state.ai ? h('button.magic', { type: 'button', onclick: () => replyTo('reply', null, 'auto') }, svg('sparkles', 16), 'Ответ с Claude') : null));
+      h('button', { type: 'button', onclick: () => replyTo('forward', latest) }, svg('forward', 16), 'Переслать')));
   }
 
   el.reader.replaceChildren(readerBar(row), body);
@@ -995,8 +951,6 @@ function renderClassic() {
       '-',
       { icon: 'flag', label: flagged ? 'Снять пометку' : 'К исполнению (пометить)', hint: 'S', disabled: !any, run: toggleStar },
       { icon: 'spam', label: f.role === 'junk' ? 'Не является нежелательной' : 'Нежелательная почта', hint: '!', disabled: !any, run: spam },
-      state.ai ? '-' : null,
-      state.ai ? { icon: 'sparkles', label: 'Кратко от Claude', hint: '.', disabled: !open, run: summarize } : null,
     ],
     'Справка': () => [
       { icon: 'keyboard', label: 'Сочетания клавиш', hint: '?', run: openShortcuts },
@@ -1048,7 +1002,6 @@ function renderClassic() {
     sep(),
     tool('search', 'Найти', () => document.getElementById('search')?.focus()),
     tool('flag', '', toggleStar, { disabled: !any, tip: 'К исполнению (S)' }),
-    state.ai ? tool('sparkles', 'Кратко', summarize, { disabled: !open, tip: 'Кратко от Claude (.)' }) : null,
     h('span.grow'),
     help);
 
@@ -1088,10 +1041,6 @@ function palette() {
     add('Действия', 'Ответить', 'reply', () => replyTo('reply'), ['r'], 'reply');
     add('Действия', 'Ответить всем', 'replyAll', () => replyTo('replyAll'), ['a'], 'reply all');
     add('Действия', 'Переслать', 'forward', () => replyTo('forward', state.open.thread.at(-1)), ['f'], 'forward');
-    if (state.ai) {
-      add('Действия', 'Кратко от Claude', 'sparkles', summarize, ['.'], 'summary ai ии саммари');
-      add('Действия', 'Ответ с Claude', 'sparkles', () => replyTo('reply', null, 'auto'), null, 'ai draft черновик ии');
-    }
     add('Действия', 'Архивировать', 'archive', archive, ['e'], 'archive');
     add('Действия', 'Удалить', 'trash', trash, ['#'], 'delete trash корзина');
     add('Действия', 'Избранное', 'star', toggleStar, ['s'], 'star flag звезда');
@@ -1207,7 +1156,6 @@ document.addEventListener('keydown', (e) => {
       if (key) toggleSelect(key);
     },
     '/': () => document.getElementById('search')?.focus(),
-    '.': summarize,
     ',': settingsSheet,
     '?': openShortcuts,
     R: sendReceive,
@@ -1293,7 +1241,6 @@ async function start() {
     const info = await api('/api/state');
     state.mode = info.mode;
     state.me = info.account;
-    state.ai = info.ai;
   } catch (err) {
     toast(`Сервер не отвечает: ${err.message}`, { error: true, duration: 8000 });
   }

@@ -997,62 +997,10 @@ kbd {
   font-weight: 550;
 }
 
-.ai-card {
-  position: relative;
-  border-radius: 16px;
-  padding: 14px 16px 14px 46px;
-  margin: 0 0 18px;
-  background:
-    linear-gradient(var(--panel-solid), var(--panel-solid)) padding-box,
-    linear-gradient(120deg, hsl(var(--accent-h) 90% 66%), hsl(calc(var(--accent-h) + 70) 90% 70%), hsl(calc(var(--accent-h) + 140) 85% 66%)) border-box;
-  border: 1.5px solid transparent;
-  box-shadow: 0 10px 30px -14px hsl(var(--accent-h) 85% 55% / 0.5);
-  animation: pop 0.3s var(--spring);
-  white-space: pre-wrap;
-  line-height: 1.6;
-}
-.ai-card > .ic {
-  position: absolute;
-  left: 16px;
-  top: 16px;
-  color: var(--accent);
-}
-.ai-card .ai-title {
-  font-weight: 650;
-  font-size: 12px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--accent-strong);
-  margin-bottom: 4px;
-  white-space: normal;
-}
-.ai-card .close {
-  position: absolute;
-  right: 6px;
-  top: 6px;
-  width: 28px;
-  height: 28px;
-}
-.ai-card.loading .ai-body:empty::before {
-  content: 'Читаю переписку…';
-  color: var(--ink-3);
-}
-.ai-card.loading .ai-body::after {
-  content: '';
-  display: inline-block;
-  width: 7px;
-  height: 15px;
-  margin-left: 2px;
-  vertical-align: -2px;
-  border-radius: 2px;
-  background: var(--accent);
-  animation: caret 0.9s steps(2) infinite;
-}
-@keyframes caret {
-  50% {
-    opacity: 0;
-  }
-}
+
+
+
+
 
 .msg {
   border-radius: 16px;
@@ -1260,14 +1208,6 @@ kbd {
   color: var(--ink);
   border-color: var(--ink-4);
   transform: translateY(-1px);
-}
-.quick button.magic {
-  color: var(--accent-strong);
-  border-color: hsl(var(--accent-h) 90% 62% / 0.4);
-  background: var(--accent-softer);
-}
-.quick button.magic:hover {
-  border-color: var(--accent);
 }
 
 /* ───────────────────────────────────────────── compose */
@@ -1521,9 +1461,6 @@ kbd {
 .editor .sig {
   color: var(--ink-3);
 }
-.editor.streaming {
-  caret-color: transparent;
-}
 
 .c-atts {
   display: flex;
@@ -1556,45 +1493,9 @@ kbd {
   flex: none;
 }
 
-.ai-prompt {
-  margin: 0 18px 10px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 6px 6px 12px;
-  border-radius: 14px;
-  border: 1.5px solid transparent;
-  background:
-    linear-gradient(var(--panel-raised), var(--panel-raised)) padding-box,
-    linear-gradient(120deg, hsl(var(--accent-h) 90% 66%), hsl(calc(var(--accent-h) + 70) 90% 70%), hsl(calc(var(--accent-h) + 140) 85% 66%)) border-box;
-  animation: pop 0.2s var(--spring);
-}
-.ai-prompt .ic {
-  color: var(--accent);
-}
-.ai-prompt input {
-  flex: 1;
-  border: 0;
-  outline: 0;
-  background: none;
-  height: 32px;
-  min-width: 0;
-}
-.ai-prompt button {
-  height: 32px;
-  padding: 0 12px;
-  border-radius: 10px;
-  font-weight: 600;
-  font-size: 13px;
-  color: var(--accent-strong);
-}
-.ai-prompt button:hover {
-  background: var(--accent-soft);
-}
-.ai-prompt button.go {
-  background: var(--accent);
-  color: var(--accent-ink);
-}
+
+
+
 
 .c-foot {
   flex: none;
