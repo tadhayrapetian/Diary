@@ -10,7 +10,10 @@ const REMOTE = /(<img[^>]+src\s*=\s*["']?\s*(https?:)?\/\/)|(url\(\s*["']?\s*(ht
 
 export const hasRemoteContent = (html) => REMOTE.test(html || '');
 
-const attachmentUrl = (m, index) => `/api/attachment?folder=${encodeURIComponent(m.folder)}&id=${encodeURIComponent(m.id)}&index=${index}`;
+// The standalone demo has no server and hands out attachments itself.
+const attachmentUrl = (m, index) =>
+  window.AETHER_STATIC?.attachmentUrl(m.folder, m.id, index) ??
+  `/api/attachment?folder=${encodeURIComponent(m.folder)}&id=${encodeURIComponent(m.id)}&index=${index}`;
 
 function inlineCids(m, html) {
   const byCid = new Map((m.attachments || []).filter((a) => a.cid).map((a) => [a.cid.replace(/^<|>$/g, '').toLowerCase(), a.index]));

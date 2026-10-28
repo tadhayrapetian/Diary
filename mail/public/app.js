@@ -753,7 +753,7 @@ function attachmentsNode(m) {
   const list = (m.attachments || []).filter((a) => !a.inline);
   if (!list.length) return null;
   return h('div.atts', ...list.map((a) => {
-    const url = `/api/attachment?folder=${encodeURIComponent(m.folder)}&id=${encodeURIComponent(m.id)}&index=${a.index}`;
+    const url = window.AETHER_STATIC?.attachmentUrl(m.folder, m.id, a.index) ?? `/api/attachment?folder=${encodeURIComponent(m.folder)}&id=${encodeURIComponent(m.id)}&index=${a.index}`;
     const image = /^image\/(png|jpe?g|gif|webp|avif|svg\+xml)$/i.test(a.contentType);
     const badge = fileBadge(a.filename);
     const thumb = image
@@ -1170,7 +1170,7 @@ document.addEventListener('keydown', (e) => {
 // ───────────────────────────────────────────── live mail
 
 function listen() {
-  const source = new EventSource('/api/events');
+  const source = window.AETHER_STATIC?.events ?? new EventSource('/api/events');
   source.addEventListener('new', (e) => {
     const { folder, message } = JSON.parse(e.data);
     contacts.learn([message.from]);
@@ -1256,7 +1256,7 @@ async function start() {
     } catch {
       /* no storage, no greeting memory */
     }
-    setTimeout(() => toast(`Это демо-ящик. Нажмите ${modK} — там всё самое интересное`, { icon: 'sparkles', duration: 6000 }), 700);
+    setTimeout(() => toast(matchMedia('(pointer: coarse)').matches ? 'Это демо-ящик: письма ненастоящие. Оформление — в меню ☰, кнопка с палитрой внизу' : `Это демо-ящик. Нажмите ${modK} — там всё самое интересное`, { icon: 'sparkles', duration: 6000 }), 700);
   }
 }
 

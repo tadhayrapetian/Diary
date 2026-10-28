@@ -1,5 +1,5 @@
 import { EventEmitter } from 'node:events';
-import { htmlToText, normalizeSubject, snippetFrom, textToHtml } from './util.js';
+import { htmlToText, normalizeSubject, snippetFrom, textToHtml } from './text.js';
 
 /**
  * A complete mailbox that lives in memory. It lets the whole client run before an
